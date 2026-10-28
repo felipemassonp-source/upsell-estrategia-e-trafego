@@ -125,10 +125,38 @@ const statement: { text: string; accent?: boolean }[] = [
   { text: 'A UPSELL atua no elo que está travando o seu crescimento.' },
 ];
 
-const symptoms: { id: ServiceKey; n: string; pain: string; fix: string }[] = [
-  { id: 'trafego', n: '01', pain: 'Você investe em anúncios e não sabe exatamente o que voltou.', fix: 'Tráfego pago com rastreamento' },
-  { id: 'sites', n: '02', pain: 'Seu site até é bonito, mas quase ninguém chama.', fix: 'Site pensado para converter' },
-  { id: 'comercial', n: '03', pain: 'Os contatos chegam e se perdem entre conversas e follow-ups.', fix: 'Processo comercial estruturado' },
+const symptoms: {
+  id: ServiceKey;
+  n: string;
+  pain: string;
+  cause: string;
+  howWeSolve: string;
+  service: string;
+}[] = [
+  {
+    id: 'trafego',
+    n: '01',
+    pain: 'Você investe em anúncios todo mês, mas não sabe exatamente de onde veio o retorno.',
+    cause: 'Falta de rastreamento de conversão e campanhas distribuídas sem leitura clara de CAC.',
+    howWeSolve: 'Configuramos pixels e eventos de ponta a ponta para direcionar a verba aos públicos e criativos que realmente trazem clientes.',
+    service: 'Solução em Tráfego Pago',
+  },
+  {
+    id: 'sites',
+    n: '02',
+    pain: 'Seu site até recebe visitas e parece bonito, mas quase ninguém clica para conversar.',
+    cause: 'Páginas sem hierarquia de conteúdo, proposta de valor confusa e botões de contato escondidos.',
+    howWeSolve: 'Criamos uma página com narrativa persuasiva, carregamento rápido e caminhos óbvios para o visitante virar lead qualificado.',
+    service: 'Solução em Criação de Sites',
+  },
+  {
+    id: 'comercial',
+    n: '03',
+    pain: 'Os contatos até chegam no WhatsApp, mas esfriam e se perdem antes da proposta.',
+    cause: 'Atendimento sem padrão de tempo de resposta, sem qualificação prévia e sem rotina de follow-up.',
+    howWeSolve: 'Mapeamos onde o lead trava no funil e criamos roteiros práticos para a equipe conduzir o contato até o fechamento.',
+    service: 'Solução em Consultoria Comercial',
+  },
 ];
 
 const steps = [
@@ -634,14 +662,51 @@ export function HomeExperience({ onOpenAuth }: { onOpenAuth: () => void }) {
                 onClick={() => setActiveService(s.id)}
                 data-reveal
                 style={d(i * 120)}
-                className="symptom reveal-item group relative flex flex-col justify-between gap-10 overflow-hidden bg-[#f7f7f4] p-6 sm:p-8"
+                className="symptom reveal-item group relative flex flex-col justify-between overflow-hidden bg-[#f7f7f4] p-6 sm:p-8"
               >
                 <span className="symptom-fill absolute inset-0 origin-bottom bg-[#141414]" aria-hidden="true" />
-                <span className="relative flex items-center justify-between font-mono text-xs text-[#ed1c24]">{s.n} / Sinal<ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" /></span>
-                <span className="relative text-xl font-semibold leading-snug transition-colors duration-500 group-hover:text-white sm:text-2xl">“{s.pain}”</span>
-                <span className="relative flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] transition-colors duration-500 group-hover:text-[#ff5a60]">
-                  <span className="h-px w-6 bg-[#ed1c24]" /> {s.fix}
-                </span>
+                
+                {/* Cabeçalho do Card */}
+                <div className="relative mb-6">
+                  <div className="flex items-center justify-between font-mono text-xs text-[#ed1c24]">
+                    <span>{s.n} / Diagnóstico de Gargalo</span>
+                    <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
+                  </div>
+                  <h3 className="mt-3 text-lg sm:text-xl font-bold leading-snug text-[#141414] transition-colors duration-500 group-hover:text-white">
+                    “{s.pain}”
+                  </h3>
+                </div>
+
+                {/* Conexão Causa -> Como a UPSELL Resolve */}
+                <div className="relative my-4 space-y-3 border-y border-black/10 py-4 transition-colors duration-500 group-hover:border-white/15">
+                  <div>
+                    <span className="block text-[9px] font-bold uppercase tracking-[0.16em] text-black/45 transition-colors duration-500 group-hover:text-white/40">
+                      Por que isso acontece:
+                    </span>
+                    <p className="mt-1 text-xs sm:text-[13px] leading-relaxed text-black/70 transition-colors duration-500 group-hover:text-white/70">
+                      {s.cause}
+                    </p>
+                  </div>
+                  <div className="pt-2">
+                    <span className="block text-[9px] font-bold uppercase tracking-[0.16em] text-[#ed1c24] transition-colors duration-500 group-hover:text-[#ff8388]">
+                      Como a UPSELL resolve:
+                    </span>
+                    <p className="mt-1 text-xs sm:text-[13px] font-medium leading-relaxed text-[#141414] transition-colors duration-500 group-hover:text-white">
+                      {s.howWeSolve}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Rodapé do Card com CTA para a seção */}
+                <div className="relative mt-4 flex items-center justify-between pt-2">
+                  <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#ed1c24] transition-colors duration-500 group-hover:text-[#ff8388]">
+                    <span className="h-px w-5 bg-[#ed1c24] transition-colors duration-500 group-hover:bg-[#ff8388]" />
+                    {s.service}
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-black/40 transition-colors duration-500 group-hover:text-white/50">
+                    Ver detalhes ↓
+                  </span>
+                </div>
               </a>
             ))}
           </div>
