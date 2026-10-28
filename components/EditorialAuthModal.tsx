@@ -68,7 +68,20 @@ export function EditorialAuthModal({ isOpen, onClose, onLogin }: EditorialAuthMo
       );
     } catch (err: unknown) {
       console.error('Erro de autenticação:', err);
-      setAuthError('Não foi possível concluir a autenticação com o Google. Tente novamente.');
+      const firebaseCode = (err as { code?: string })?.code || '';
+      const firebaseMsg = (err as { message?: string })?.message || String(err);
+
+      if (firebaseCode === 'auth/unauthorized-domain') {
+        setAuthError(
+          'Domínio não autorizado no Firebase Auth! Você precisa adicionar "localhost" ou o domínio da Vercel em: Firebase Console > Authentication > Settings > Authorized Domains.'
+        );
+      } else if (firebaseCode === 'auth/popup-blocked') {
+        setAuthError('O popup do Google foi bloqueado pelo seu navegador. Por favor, permita popups para este site.');
+      } else if (firebaseCode === 'auth/popup-closed-by-user') {
+        setAuthError('A janela de login do Google foi fechada antes de concluir.');
+      } else {
+        setAuthError(`Erro ao autenticar: ${firebaseCode ? `[${firebaseCode}] ` : ''}${firebaseMsg}`);
+      }
     } finally {
       setIsGoogleLoading(false);
     }
