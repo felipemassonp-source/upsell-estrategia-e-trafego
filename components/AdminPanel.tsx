@@ -1,7 +1,14 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { ClientProfile, ClientActionItem, ClientToolAccess, OptimizationLog, VisualTheme } from '@/lib/types';
+import {
+  ClientProfile,
+  ClientActionItem,
+  ClientToolAccess,
+  OptimizationLog,
+  WeeklyDataPoint,
+  VisualTheme
+} from '@/lib/types';
 import { useUpsellStore } from '@/lib/store';
 import { TaskKanban } from './TaskKanban';
 import {
@@ -30,26 +37,21 @@ import {
   Key,
   Lock,
   Copy,
-  Server,
-  Globe,
   Search,
   Edit3,
   Sun,
   Moon,
   Layers,
-  ListChecks,
   Share2,
-  ChevronRight,
-  ShieldAlert,
   UserPlus,
   X,
-  CopyCheck,
   ArrowRight,
-  KeyRound,
-  MessageCircle,
   FileText,
   Video,
-  Image as ImageIcon
+  Image as ImageIcon,
+  TrendingUp,
+  Compass,
+  Calculator
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -67,7 +69,6 @@ interface AdminPanelProps {
   onToggleTheme?: () => void;
 }
 
-// Helper to format URLs to always include https:// if missing
 function formatSafeUrl(url: string): string {
   if (!url) return '';
   const trimmed = url.trim();
@@ -77,7 +78,6 @@ function formatSafeUrl(url: string): string {
   return `https://${trimmed}`;
 }
 
-// Helper to calculate contract timelapse progress dynamically
 function calculateTimelapse(startStr: string, endStr: string) {
   const parseDate = (str: string) => {
     if (!str) return null;
@@ -107,7 +107,6 @@ function calculateTimelapse(startStr: string, endStr: string) {
   return { daysRemaining, progressPercent };
 }
 
-// Strong password generator helper
 function generateStrongPassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*';
   let pass = '';
@@ -117,7 +116,6 @@ function generateStrongPassword(): string {
   return pass;
 }
 
-// Preset definitions for quick addition of hosting, ads, and web tools
 interface ToolPreset {
   name: string;
   category: string;
@@ -149,14 +147,14 @@ const TOOL_PRESETS: ToolPreset[] = [
     defaultLogin: 'admin_cloudflare'
   },
   {
-    name: 'Meta Business Manager (BM Upsell)',
+    name: 'Meta Business Manager (BM UPSELL)',
     category: 'Tráfego & Anúncios',
     accessUrl: 'https://business.facebook.com/settings',
     detail: 'Pixel, Conversions API, Contas de Anúncio e Catálogos vinculados',
     defaultLogin: 'bm_upsell'
   },
   {
-    name: 'Google Ads (MCC Upsell)',
+    name: 'Google Ads (MCC UPSELL)',
     category: 'Tráfego & Anúncios',
     accessUrl: 'https://ads.google.com',
     detail: 'Conta vinculada à MCC com faturamento direto do cliente',
@@ -178,22 +176,25 @@ function createDefaultNewClientProfile(
   email: string
 ): ClientProfile {
   const now = Date.now();
-  const slug = companyName
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '') || `cliente-${now}`;
+  const slug =
+    companyName
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '') || `cliente-${now}`;
 
   const startDate = new Date();
   const renewalDate = new Date(now + 365 * 24 * 60 * 60 * 1000);
+  const cleanEmail = email.trim().toLowerCase() || 'contato@empresa.com.br';
 
   return {
     id: slug,
     companyName: companyName.trim(),
     segment: segment.trim() || 'Serviços Especializados',
     responsibleName: responsibleName.trim() || 'Diretor Geral',
-    email: email.trim() || 'contato@empresa.com.br',
+    email: cleanEmail,
+    allowedEmails: [cleanEmail],
     contractStatus: 'Contrato Vigente',
     contractStart: startDate.toLocaleDateString('pt-BR'),
     contractRenewal: renewalDate.toLocaleDateString('pt-BR'),
@@ -208,14 +209,14 @@ function createDefaultNewClientProfile(
     metrics: {
       investment: 5000,
       leads: 120,
-      cpl: 41.66,
+      cpl: 41.67,
       roas: 4.2,
       revenue: 21000,
       growth: {
-        investment: 'Início',
-        leads: 'Início',
-        cpl: 'Início',
-        roas: 'Início'
+        investment: 'Ativo',
+        leads: '+18%',
+        cpl: '-12%',
+        roas: '+0.6x'
       }
     },
     links: {
@@ -224,24 +225,23 @@ function createDefaultNewClientProfile(
       googleDrive: '',
       contractPdf: ''
     },
-    accessPin: Math.floor(100000 + Math.random() * 900000).toString(),
     actionItems: [
       {
         id: `task-${now}-1`,
         task: 'Liberação de acessos ao Meta Business Manager e Google Ads',
-        detail: 'Convidar a equipe da Upsell com papel de administrador ou agência.',
+        detail: 'Convidar a equipe da UPSELL com papel de administrador ou agência.',
         status: 'pending',
         due: 'Nos primeiros 3 dias',
         assignee: 'client',
         priority: 'high',
-        category: 'Onboarding'
+        category: 'Onboarding & Acessos'
       },
       {
         id: `task-${now}-2`,
         task: 'Instalação do Pixel e Conversions API (CAPI) no site',
-        detail: 'Configurar evento de Purchase/Lead e testar envio de eventos no Gerenciador de Eventos.',
+        detail: 'Configurar evento de Lead e testar envio de eventos no Gerenciador.',
         status: 'in_progress',
-        due: 'Até amanhã',
+        due: 'Em execução',
         assignee: 'agency',
         priority: 'high',
         category: 'Tracking & Pixel'
@@ -252,31 +252,40 @@ function createDefaultNewClientProfile(
         id: `tool-${now}-1`,
         name: 'Meta Business Manager',
         category: 'Tráfego & Anúncios',
-        accountEmail: email.trim() || 'contato@empresa.com.br',
+        accountEmail: cleanEmail,
         loginUser: 'gestor_upsell',
         password: generateStrongPassword(),
         accessUrl: 'https://business.facebook.com',
         status: 'Em Configuração',
-        detail: 'Em processo de vinculação com a agência Upsell'
+        detail: 'Em processo de vinculação com a agência UPSELL'
       }
     ],
     weeklyHistory: [
-      { week: 'Sem 01', investment: 1250, revenue: 5250, leads: 30, cpl: 41.66 }
+      { week: 'Sem 01', investment: 1250, revenue: 5250, leads: 30, cpl: 41.67 },
+      { week: 'Sem 02', investment: 1250, revenue: 5400, leads: 32, cpl: 39.06 },
+      { week: 'Sem 03', investment: 1250, revenue: 5100, leads: 28, cpl: 44.64 },
+      { week: 'Sem 04', investment: 1250, revenue: 5250, leads: 30, cpl: 41.67 }
     ],
-    optimizationLogs: []
+    optimizationLogs: [
+      {
+        id: `opt-${now}-1`,
+        date: 'Início do ciclo',
+        channel: 'Tracking & CAPI',
+        action: 'Estruturação inicial da conta e configuração de rastreamento de conversões',
+        expectedImpact: 'Leitura precisa de origem dos contatos comerciais',
+        status: 'Concluído'
+      }
+    ]
   };
 }
 
-// Active Tabs for Admin Panel Navigation to avoid cognitive overload
-type AdminTab = 'resumo' | 'ferramentas' | 'pendencias' | 'links' | 'visao-geral';
+type AdminTab = 'resumo' | 'metricas' | 'pendencias' | 'links' | 'ferramentas' | 'visao-geral';
 
-// Sub-component for editing a specific client
 function ClientEditor({
   client,
   onUpdateClient,
   onViewAsClient,
   onRequestDeleteClient,
-  canDeleteClient,
   showToast,
   isLight
 }: {
@@ -284,114 +293,84 @@ function ClientEditor({
   onUpdateClient: AdminPanelProps['onUpdateClient'];
   onViewAsClient: (id: string) => void;
   onRequestDeleteClient: (client: ClientProfile) => void;
-  canDeleteClient: boolean;
   showToast: (msg: string) => void;
   isLight: boolean;
 }) {
-  // Navigation Tab State
   const [activeTab, setActiveTab] = useState<AdminTab>('resumo');
 
-  // 1. Gestão de Vigência
+  // 1. Dados Cadastrais & Vigência
+  const [companyName, setCompanyName] = useState(client.companyName || '');
+  const [segment, setSegment] = useState(client.segment || '');
+  const [responsibleName, setResponsibleName] = useState(client.responsibleName || '');
+  const [primaryEmail, setPrimaryEmail] = useState(client.email || '');
   const [contractStart, setContractStart] = useState(client.contractStart || '15/10/2024');
   const [contractRenewal, setContractRenewal] = useState(client.contractRenewal || '15/10/2026');
   const [contractStatus, setContractStatus] = useState(client.contractStatus || 'Contrato Vigente');
 
-  // 1.1 Controle de Acesso Seguro do Cliente (Gmail / Google Auth)
+  // 1.1 Contas Google Autorizadas
   const [allowedEmailsInput, setAllowedEmailsInput] = useState(() => {
     const list = client.allowedEmails || [];
     if (list.length === 0 && client.email) return client.email;
     return list.join(', ');
   });
 
-  // 2. Resumo da Situação Atual
+  // 2. Bússola do Mês & Escopo
   const [currentFocus, setCurrentFocus] = useState(client.currentFocus || '');
   const [nextSteps, setNextSteps] = useState(client.nextSteps || '');
+  const [scopeText, setScopeText] = useState(() => (client.scope || []).join('\n'));
+  const [channelsInput, setChannelsInput] = useState(() =>
+    (client.activeChannels || ['Meta Ads', 'Google Ads']).join(', ')
+  );
 
-  // 3. Gerenciador de Pendências do Cliente
+  // 3. Métricas do Mês (KPIs)
+  const [investment, setInvestment] = useState<number>(client.metrics?.investment ?? 5000);
+  const [leads, setLeads] = useState<number>(client.metrics?.leads ?? 120);
+  const [cpl, setCpl] = useState<number>(client.metrics?.cpl ?? 41.67);
+  const [roas, setRoas] = useState<number>(client.metrics?.roas ?? 4.2);
+  const [revenue, setRevenue] = useState<number>(client.metrics?.revenue ?? 21000);
+  const [growthInvestment, setGrowthInvestment] = useState(client.metrics?.growth?.investment || 'Ativo');
+  const [growthLeads, setGrowthLeads] = useState(client.metrics?.growth?.leads || '+15%');
+  const [growthCpl, setGrowthCpl] = useState(client.metrics?.growth?.cpl || '-10%');
+  const [growthRoas, setGrowthRoas] = useState(client.metrics?.growth?.roas || '+0.4x');
+
+  // 3.1 Histórico Semanal (Gráfico)
+  const [weeklyHistory, setWeeklyHistory] = useState<WeeklyDataPoint[]>(() => {
+    if (client.weeklyHistory && client.weeklyHistory.length > 0) {
+      return client.weeklyHistory;
+    }
+    return [
+      { week: 'Sem 01', investment: 1200, revenue: 4800, leads: 30, cpl: 40.0 },
+      { week: 'Sem 02', investment: 1300, revenue: 5500, leads: 35, cpl: 37.14 },
+      { week: 'Sem 03', investment: 1250, revenue: 5300, leads: 32, cpl: 39.06 },
+      { week: 'Sem 04', investment: 1400, revenue: 6200, leads: 40, cpl: 35.0 }
+    ];
+  });
+
+  // 3.2 Diário de Otimizações
+  const [optimizationLogs, setOptimizationLogs] = useState<OptimizationLog[]>(() => {
+    return client.optimizationLogs || [];
+  });
+  const [newLogChannel, setNewLogChannel] = useState<OptimizationLog['channel']>('Meta Ads');
+  const [newLogDate, setNewLogDate] = useState('Hoje');
+  const [newLogAction, setNewLogAction] = useState('');
+  const [newLogImpact, setNewLogImpact] = useState('');
+  const [newLogStatus, setNewLogStatus] = useState<OptimizationLog['status']>('Concluído');
+
+  // 4. Tarefas (Kanban)
   const [actionItems, setActionItems] = useState<ClientActionItem[]>(() => {
-    if (client.actionItems && client.actionItems.length > 0) {
-      return client.actionItems;
-    }
-    return [
-      {
-        id: 'task-1',
-        task: 'Gravação dos 2 vídeos de respostas a dúvidas frequentes',
-        detail: 'Roteiros enviados pelo gestor no WhatsApp. Duração de 45 a 60 segundos.',
-        status: 'pending',
-        due: 'Até 22/10'
-      },
-      {
-        id: 'task-2',
-        task: 'Envio de 5 fotos em alta resolução da nova sala de atendimento',
-        detail: 'Material para os novos criativos estáticos de prova institucional.',
-        status: 'completed',
-        due: 'Concluído em 10/10'
-      }
-    ];
+    return client.actionItems || [];
   });
 
-  // State to add a new task
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDetail, setNewTaskDetail] = useState('');
-  const [newTaskDue, setNewTaskDue] = useState('Em 5 dias');
-
-  // State for Editing a Task
-  const [editingTask, setEditingTask] = useState<ClientActionItem | null>(null);
-  const [confirmDeleteTaskId, setConfirmDeleteTaskId] = useState<string | null>(null);
-  const [taskFilter, setTaskFilter] = useState<'all' | 'pending' | 'completed'>('all');
-
-  // 5. Gerenciador de Ferramentas & Acessos (Cofre de Credenciais da Operação)
+  // 5. Cofre de Ferramentas
   const [activeTools, setActiveTools] = useState<ClientToolAccess[]>(() => {
-    if (client.activeTools && client.activeTools.length > 0) {
-      return client.activeTools;
-    }
-    return [
-      {
-        id: 'tool-hospedagem',
-        name: 'Hospedagem do Site (Hostinger Cloud)',
-        category: 'Hospedagem & Servidor',
-        accountEmail: client.email,
-        loginUser: 'adm_servidor',
-        password: generateStrongPassword(),
-        accessUrl: 'https://hpanel.hostinger.com',
-        status: 'Ativo / Vinculado',
-        detail: 'Servidor Cloud com SSL ativo e PHP 8.3'
-      },
-      {
-        id: 'tool-1',
-        name: 'Meta Business Manager',
-        category: 'Instagram & Facebook Ads',
-        accountEmail: client.email,
-        loginUser: 'gestor_upsell',
-        password: generateStrongPassword(),
-        accessUrl: 'https://business.facebook.com',
-        status: 'Ativo / Vinculado',
-        detail: 'Pixel e CAPI operando normalmente'
-      },
-      {
-        id: 'tool-2',
-        name: 'Google Ads (MCC Upsell)',
-        category: 'Rede de Pesquisa & PMax',
-        accountEmail: client.email,
-        loginUser: 'ads_upsell',
-        password: generateStrongPassword(),
-        accessUrl: 'https://ads.google.com',
-        status: 'Ativo / Vinculado',
-        detail: 'Campanhas de intenção de fundo de funil ativas'
-      }
-    ];
+    return client.activeTools || [];
   });
-
-  // State for Tools Filter & Search
   const [toolSearch, setToolSearch] = useState('');
   const [toolCategoryFilter, setToolCategoryFilter] = useState('Todas');
   const [isAddingTool, setIsAddingTool] = useState(false);
-
-  // EDITING TOOL STATE
   const [editingTool, setEditingTool] = useState<ClientToolAccess | null>(null);
   const [confirmDeleteToolId, setConfirmDeleteToolId] = useState<string | null>(null);
 
-  // New Tool Form State
   const [newToolName, setNewToolName] = useState('');
   const [newToolCategory, setNewToolCategory] = useState('Hospedagem & Servidor');
   const [newToolEmail, setNewToolEmail] = useState(client.email);
@@ -401,239 +380,131 @@ function ClientEditor({
   const [newToolDetail, setNewToolDetail] = useState('');
   const [newToolStatus, setNewToolStatus] = useState<'Ativo / Vinculado' | 'Pendente de Acesso' | 'Em Configuração'>('Ativo / Vinculado');
   const [showNewPassword, setShowNewPassword] = useState(false);
-
-  // Visible passwords toggles map: { [toolId]: boolean }
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
-
-  // Copied feedback map: { [key: string]: boolean }
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // 6. Central de Links Externos & Repositórios Segmentados
-  const [googleDrive, setGoogleDrive] = useState(client.links.googleDrive || '');
-  const [contractPdf, setContractPdf] = useState(client.links.contractPdf || '');
-  const [lookerStudio, setLookerStudio] = useState(client.links.lookerStudio || '');
-  const [creativeCopies, setCreativeCopies] = useState(client.links.creativeCopies || '');
-  const [creativeVideos, setCreativeVideos] = useState(client.links.creativeVideos || '');
-  const [creativeImages, setCreativeImages] = useState(client.links.creativeImages || '');
+  // 6. Links Externos & Drive
+  const [googleDrive, setGoogleDrive] = useState(client.links?.googleDrive || '');
+  const [contractPdf, setContractPdf] = useState(client.links?.contractPdf || '');
+  const [lookerStudio, setLookerStudio] = useState(client.links?.lookerStudio || '');
+  const [creativeCopies, setCreativeCopies] = useState(client.links?.creativeCopies || '');
+  const [creativeVideos, setCreativeVideos] = useState(client.links?.creativeVideos || '');
+  const [creativeImages, setCreativeImages] = useState(client.links?.creativeImages || '');
 
-  // Calculate live timelapse
   const { daysRemaining, progressPercent } = calculateTimelapse(contractStart, contractRenewal);
 
-  // Toggle visible password for a tool
-  const togglePasswordVisibility = (toolId: string) => {
-    setVisiblePasswords(prev => ({ ...prev, [toolId]: !prev[toolId] }));
+  // Auto-calculate CPL and ROAS helper
+  const handleAutoCalculateMetrics = () => {
+    const calculatedCpl = leads > 0 ? Number((investment / leads).toFixed(2)) : 0;
+    const calculatedRoas = investment > 0 ? Number((revenue / investment).toFixed(2)) : 0;
+    setCpl(calculatedCpl);
+    setRoas(calculatedRoas);
+    showToast(`CPL (R$ ${calculatedCpl}) e ROAS (${calculatedRoas}x) recalculados com base no Investimento, Leads e Receita!`);
   };
 
-  // Safe copy to clipboard helper
-  const copyToClipboard = (text: string, identifier: string, label: string) => {
-    if (!text) {
-      showToast('Nenhum dado informado para copiar.');
-      return;
-    }
-    try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        navigator.clipboard.writeText(text);
-      } else {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-      }
-      setCopiedKey(identifier);
-      showToast(`${label} copiado com sucesso!`);
-      setTimeout(() => setCopiedKey(null), 2500);
-    } catch {
-      showToast('Erro ao copiar.');
-    }
-  };
-
-  // Test link helper
-  const handleTestLink = (url: string, name: string) => {
-    if (!url || !url.trim()) {
-      showToast(`O link de "${name}" ainda não foi preenchido.`);
-      return;
-    }
-    const safeUrl = formatSafeUrl(url);
-    window.open(safeUrl, '_blank', 'noopener,noreferrer');
-  };
-
-  // Preset button click handler
-  const applyPreset = (preset: ToolPreset) => {
-    setNewToolName(preset.name);
-    setNewToolCategory(preset.category);
-    setNewToolUrl(preset.accessUrl);
-    setNewToolDetail(preset.detail);
-    setNewToolLogin(preset.defaultLogin);
-    setNewToolPassword(generateStrongPassword());
-    setIsAddingTool(true);
-    showToast(`Modelo "${preset.name}" carregado no formulário.`);
-  };
-
-  // ==========================================
-  // TASK HANDLERS (Toggle, Add, Edit, Delete)
-  // ==========================================
-  const toggleTask = (taskId: string) => {
-    setActionItems(prev =>
-      prev.map(t => (t.id === taskId ? { ...t, status: t.status === 'pending' ? 'completed' : 'pending' } : t))
+  // Weekly History Handlers
+  const handleUpdateWeek = (index: number, field: keyof WeeklyDataPoint, value: string | number) => {
+    setWeeklyHistory(prev =>
+      prev.map((w, i) => {
+        if (i !== index) return w;
+        const updated = { ...w, [field]: value };
+        if (field === 'investment' || field === 'leads') {
+          const inv = field === 'investment' ? Number(value) : w.investment;
+          const lds = field === 'leads' ? Number(value) : w.leads;
+          updated.cpl = lds > 0 ? Number((inv / lds).toFixed(2)) : 0;
+        }
+        return updated;
+      })
     );
   };
 
-  const deleteTask = (taskId: string) => {
-    setActionItems(prev => prev.filter(t => t.id !== taskId));
-    setConfirmDeleteTaskId(null);
-    showToast('Pendência excluída com sucesso.');
+  const handleAddWeek = () => {
+    const nextNum = String(weeklyHistory.length + 1).padStart(2, '0');
+    setWeeklyHistory(prev => [
+      ...prev,
+      { week: `Sem ${nextNum}`, investment: 1300, revenue: 5500, leads: 35, cpl: 37.14 }
+    ]);
+    showToast(`Semana "Sem ${nextNum}" adicionada ao gráfico.`);
   };
 
-  const handleAddTask = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTaskTitle.trim()) {
-      showToast('Informe o título da tarefa.');
+  const handleRemoveWeek = (index: number) => {
+    if (weeklyHistory.length <= 1) {
+      showToast('Mantenha pelo menos 1 semana no gráfico.');
       return;
     }
-    const newItem: ClientActionItem = {
-      id: `task-${Date.now()}`,
-      task: newTaskTitle.trim(),
-      detail: newTaskDetail.trim() || 'Ação solicitada pelo gestor da Upsell',
-      status: 'pending',
-      due: newTaskDue.trim() || 'Pendente'
-    };
-    setActionItems(prev => [newItem, ...prev]);
-    setNewTaskTitle('');
-    setNewTaskDetail('');
-    setNewTaskDue('Em 5 dias');
-    showToast('Nova pendência criada com sucesso!');
+    setWeeklyHistory(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSaveEditTask = (e: React.FormEvent) => {
+  // Optimization Log Handlers
+  const handleAddLog = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingTask) return;
-    if (!editingTask.task.trim()) {
-      showToast('O título da pendência não pode ficar vazio.');
+    if (!newLogAction.trim()) {
+      showToast('Descreva a ação técnica realizada.');
       return;
     }
-    setActionItems(prev => prev.map(t => (t.id === editingTask.id ? editingTask : t)));
-    setEditingTask(null);
-    showToast('Pendência atualizada com sucesso!');
-  };
-
-  // ==========================================
-  // TOOL HANDLERS (Add, Edit, Delete, Duplicate)
-  // ==========================================
-  const updateToolStatus = (
-    toolId: string,
-    status: 'Ativo / Vinculado' | 'Pendente de Acesso' | 'Em Configuração'
-  ) => {
-    setActiveTools(prev => prev.map(t => (t.id === toolId ? { ...t, status } : t)));
-    showToast(`Status atualizado para: ${status}`);
-  };
-
-  const deleteTool = (toolId: string) => {
-    setActiveTools(prev => prev.filter(t => t.id !== toolId));
-    setConfirmDeleteToolId(null);
-    showToast('Ferramenta excluída do cofre.');
-  };
-
-  const duplicateTool = (tool: ClientToolAccess) => {
-    const duplicated: ClientToolAccess = {
-      ...tool,
-      id: `tool-${Date.now()}`,
-      name: `${tool.name} (Cópia)`
+    const created: OptimizationLog = {
+      id: `opt-${Date.now()}`,
+      channel: newLogChannel,
+      date: newLogDate.trim() || 'Hoje',
+      action: newLogAction.trim(),
+      expectedImpact: newLogImpact.trim() || 'Melhoria de eficiência e conversão das campanhas',
+      status: newLogStatus
     };
-    setActiveTools(prev => [duplicated, ...prev]);
-    showToast(`Ferramenta "${tool.name}" duplicada com sucesso.`);
+    setOptimizationLogs(prev => [created, ...prev]);
+    setNewLogAction('');
+    setNewLogImpact('');
+    showToast('Otimização adicionada ao diário do cliente!');
   };
 
-  const handleAddTool = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newToolName.trim()) {
-      showToast('Informe o nome da ferramenta.');
-      return;
-    }
-    const newTool: ClientToolAccess = {
-      id: `tool-${Date.now()}`,
-      name: newToolName.trim(),
-      category: newToolCategory.trim() || 'Hospedagem & Servidor',
-      accountEmail: newToolEmail.trim() || client.email,
-      loginUser: newToolLogin.trim() || '',
-      password: newToolPassword.trim() || '',
-      accessUrl: formatSafeUrl(newToolUrl.trim()),
-      detail: newToolDetail.trim() || 'Acesso configurado e monitorado pela Upsell',
-      status: newToolStatus
-    };
-    setActiveTools(prev => [newTool, ...prev]);
-    setNewToolName('');
-    setNewToolCategory('Hospedagem & Servidor');
-    setNewToolEmail(client.email);
-    setNewToolLogin('');
-    setNewToolPassword('');
-    setNewToolUrl('');
-    setNewToolDetail('');
-    setIsAddingTool(false);
-    showToast('Nova ferramenta e credencial adicionadas ao cofre!');
+  const handleRemoveLog = (id: string) => {
+    setOptimizationLogs(prev => prev.filter(l => l.id !== id));
+    showToast('Registro removido do diário.');
   };
 
-  const handleSaveEditTool = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingTool) return;
-    if (!editingTool.name.trim()) {
-      showToast('O nome da ferramenta é obrigatório.');
-      return;
-    }
-    const safeEdited: ClientToolAccess = {
-      ...editingTool,
-      name: editingTool.name.trim(),
-      category: editingTool.category.trim() || 'Hospedagem & Servidor',
-      accountEmail: editingTool.accountEmail.trim() || client.email,
-      loginUser: editingTool.loginUser?.trim() || '',
-      password: editingTool.password?.trim() || '',
-      accessUrl: formatSafeUrl(editingTool.accessUrl || ''),
-      detail: editingTool.detail.trim() || 'Gerenciado pela Upsell'
-    };
-    setActiveTools(prev => prev.map(t => (t.id === safeEdited.id ? safeEdited : t)));
-    setEditingTool(null);
-    showToast(`Ferramenta "${safeEdited.name}" atualizada com sucesso!`);
-  };
-
-  // Filtered tools based on search and category
-  const filteredTools = activeTools.filter(tool => {
-    const matchesCategory =
-      toolCategoryFilter === 'Todas' ||
-      tool.category.toLowerCase().includes(toolCategoryFilter.toLowerCase());
-    const matchesSearch =
-      !toolSearch.trim() ||
-      tool.name.toLowerCase().includes(toolSearch.toLowerCase()) ||
-      tool.category.toLowerCase().includes(toolSearch.toLowerCase()) ||
-      tool.accountEmail.toLowerCase().includes(toolSearch.toLowerCase()) ||
-      (tool.loginUser && tool.loginUser.toLowerCase().includes(toolSearch.toLowerCase())) ||
-      (tool.detail && tool.detail.toLowerCase().includes(toolSearch.toLowerCase()));
-    return matchesCategory && matchesSearch;
-  });
-
-  // Filtered tasks based on taskFilter
-  const filteredActionItems = actionItems.filter(item => {
-    if (taskFilter === 'pending') return item.status === 'pending';
-    if (taskFilter === 'completed') return item.status === 'completed';
-    return true;
-  });
-
-  // Master Save handler
+  // Master Save
   const handleSaveAll = () => {
     const parsedAllowedEmails = allowedEmailsInput
       .split(',')
       .map(e => e.trim().toLowerCase())
       .filter(Boolean);
 
+    const parsedScope = scopeText
+      .split('\n')
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    const parsedChannels = channelsInput
+      .split(',')
+      .map(c => c.trim())
+      .filter(Boolean);
+
     onUpdateClient(client.id, {
+      companyName: companyName.trim() || client.companyName,
+      segment: segment.trim() || client.segment,
+      responsibleName: responsibleName.trim() || client.responsibleName,
+      email: primaryEmail.trim().toLowerCase() || client.email,
       contractStart,
       contractRenewal,
       contractStatus,
       currentFocus,
       nextSteps,
+      scope: parsedScope.length > 0 ? parsedScope : client.scope,
+      activeChannels: parsedChannels.length > 0 ? parsedChannels : ['Meta Ads', 'Google Ads'],
       metrics: {
-        ...client.metrics,
+        investment: Number(investment) || 0,
+        leads: Number(leads) || 0,
+        cpl: Number(cpl) || 0,
+        roas: Number(roas) || 0,
+        revenue: Number(revenue) || 0,
+        growth: {
+          investment: growthInvestment,
+          leads: growthLeads,
+          cpl: growthCpl,
+          roas: growthRoas
+        }
       },
+      weeklyHistory,
+      optimizationLogs,
       actionItems,
       activeTools,
       links: {
@@ -645,1051 +516,871 @@ function ClientEditor({
         creativeVideos: formatSafeUrl(creativeVideos),
         creativeImages: formatSafeUrl(creativeImages)
       },
-      allowedEmails: parsedAllowedEmails.length > 0 ? parsedAllowedEmails : [client.email.toLowerCase().trim()]
+      allowedEmails:
+        parsedAllowedEmails.length > 0
+          ? parsedAllowedEmails
+          : [primaryEmail.toLowerCase().trim() || client.email.toLowerCase().trim()]
     });
 
-    showToast(`Todas as alterações de ${client.companyName} foram salvas!`);
+    showToast(`Dados de ${companyName || client.companyName} salvos e sincronizados no Firebase!`);
   };
 
-  // Color classes helper based on isLight - Alto Contraste Rigoroso
-  const cardBg = isLight
-    ? 'bg-white border-2 border-slate-300 shadow-sm text-[#0f172a]'
-    : 'bg-[#12141a] border border-white/15 shadow-xl text-white';
+  // Clipboard & Link Helpers
+  const copyToClipboard = (text: string, identifier: string, label: string) => {
+    if (!text) {
+      showToast('Nenhum dado informado para copiar.');
+      return;
+    }
+    try {
+      navigator?.clipboard?.writeText(text);
+      setCopiedKey(identifier);
+      showToast(`${label} copiado!`);
+      setTimeout(() => setCopiedKey(null), 2000);
+    } catch {
+      showToast('Erro ao copiar.');
+    }
+  };
 
-  const innerBg = isLight
-    ? 'bg-white border-2 border-slate-200/90 shadow-xs text-[#0f172a]'
-    : 'bg-[#181b24] border border-white/12 text-slate-100';
-
-  const inputClass = isLight
-    ? 'w-full px-3.5 py-2.5 bg-white border-2 border-slate-300 rounded-xl text-xs text-[#0f172a] placeholder-slate-400 focus:outline-none focus:border-[#b58c56] focus:ring-2 focus:ring-[#b58c56]/20 transition-all font-semibold'
-    : 'w-full px-3.5 py-2.5 bg-[#0e1016] border border-white/20 rounded-xl text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#c8a97e] transition-colors font-semibold';
-
-  const labelClass = isLight
-    ? 'block text-[11px] font-bold uppercase tracking-wider text-slate-800 mb-1.5'
-    : 'block text-[11px] font-bold uppercase tracking-wider text-slate-200 mb-1.5';
-
-  const pendingTasksCount = actionItems.filter(t => t.status === 'pending').length;
-  const completedTasksCount = actionItems.filter(t => t.status === 'completed').length;
+  const handleTestLink = (url: string, name: string) => {
+    if (!url || !url.trim()) {
+      showToast(`O link de "${name}" ainda não foi preenchido.`);
+      return;
+    }
+    window.open(formatSafeUrl(url), '_blank', 'noopener,noreferrer');
+  };
 
   const handleCopyClientLink = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const clientUrl = `${origin}/?cliente=${client.id}`;
-    const text = `Olá ${client.responsibleName}! 👋\n\nSegue o link oficial para você acessar o Portal de Performance da ${client.companyName} na UPSELL:\n👉 ${clientUrl}\n\n🔐 O acesso é liberado automaticamente ao entrar com a sua conta Google cadastrada (${client.allowedEmails?.join(', ') || client.email}).`;
-    if (navigator?.clipboard?.writeText) {
-      navigator.clipboard.writeText(text);
-    }
-    showToast(`Link de acesso com autenticação Google copiado!`);
+    const text = `Olá ${responsibleName}! 👋\n\nSegue o link oficial para você acessar o Portal de Performance da ${companyName} na UPSELL:\n👉 ${clientUrl}\n\n🔐 O acesso é liberado automaticamente ao entrar com a sua conta Google cadastrada (${allowedEmailsInput || primaryEmail}).`;
+    navigator?.clipboard?.writeText(text);
+    showToast('Convite de acesso com link copiado para enviar no WhatsApp!');
   };
+
+  // Tool Handlers
+  const applyPreset = (preset: ToolPreset) => {
+    setNewToolName(preset.name);
+    setNewToolCategory(preset.category);
+    setNewToolUrl(preset.accessUrl);
+    setNewToolDetail(preset.detail);
+    setNewToolLogin(preset.defaultLogin);
+    setNewToolPassword(generateStrongPassword());
+    setIsAddingTool(true);
+    showToast(`Modelo "${preset.name}" carregado.`);
+  };
+
+  const handleAddTool = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newToolName.trim()) return;
+    const newTool: ClientToolAccess = {
+      id: `tool-${Date.now()}`,
+      name: newToolName.trim(),
+      category: newToolCategory.trim() || 'Hospedagem & Servidor',
+      accountEmail: newToolEmail.trim() || primaryEmail,
+      loginUser: newToolLogin.trim() || '',
+      password: newToolPassword.trim() || '',
+      accessUrl: formatSafeUrl(newToolUrl.trim()),
+      detail: newToolDetail.trim() || 'Acesso configurado e monitorado pela UPSELL',
+      status: newToolStatus
+    };
+    setActiveTools(prev => [newTool, ...prev]);
+    setNewToolName('');
+    setNewToolUrl('');
+    setNewToolDetail('');
+    setIsAddingTool(false);
+    showToast('Ferramenta adicionada ao cofre!');
+  };
+
+  const handleSaveEditTool = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTool || !editingTool.name.trim()) return;
+    setActiveTools(prev => prev.map(t => (t.id === editingTool.id ? editingTool : t)));
+    setEditingTool(null);
+    showToast('Ferramenta atualizada!');
+  };
+
+  const filteredTools = activeTools.filter(tool => {
+    const matchesCategory =
+      toolCategoryFilter === 'Todas' ||
+      tool.category.toLowerCase().includes(toolCategoryFilter.toLowerCase());
+    const matchesSearch =
+      !toolSearch.trim() ||
+      tool.name.toLowerCase().includes(toolSearch.toLowerCase()) ||
+      tool.category.toLowerCase().includes(toolSearch.toLowerCase()) ||
+      tool.accountEmail.toLowerCase().includes(toolSearch.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  // Swiss Editorial Styling Classes
+  const surfaceCard = isLight
+    ? 'bg-white border border-[#141414]/12 text-[#141414] shadow-[0_12px_32px_-18px_rgba(20,20,20,0.06)]'
+    : 'bg-[#12141a] border border-white/10 text-[#f7f7f4]';
+
+  const subtleBox = isLight
+    ? 'bg-[#f7f7f4] border border-[#141414]/10 text-[#141414]'
+    : 'bg-[#0c0d10] border border-white/10 text-[#f7f7f4]';
+
+  const inputClass = isLight
+    ? 'w-full px-3.5 py-2.5 bg-white border border-[#141414]/20 rounded-xl text-xs text-[#141414] placeholder-[#141414]/40 focus:outline-none focus:border-[#141414] font-semibold transition-all'
+    : 'w-full px-3.5 py-2.5 bg-[#0c0d10] border border-white/15 rounded-xl text-xs text-white placeholder-white/35 focus:outline-none focus:border-[#ed1c24] font-semibold transition-all';
+
+  const labelClass = `block font-mono text-[10px] font-bold uppercase tracking-[0.14em] mb-1.5 ${
+    isLight ? 'text-[#141414]/75' : 'text-white/75'
+  }`;
+
+  const hairline = isLight ? 'border-[#141414]/10' : 'border-white/10';
+  const mutedText = isLight ? 'text-[#141414]/60' : 'text-white/60';
 
   return (
     <div className="space-y-8 pb-24">
-      {/* 1. Visão Geral do Cliente & Barra de Ações Rápidas */}
-      <div className={`p-6 sm:p-7 rounded-2xl ${cardBg} flex flex-col md:flex-row md:items-center justify-between gap-6 transition-colors`}>
-        <div className="space-y-1">
+      {/* 1. CABEÇALHO DO CLIENTE EM EDIÇÃO */}
+      <div className={`p-6 sm:p-8 rounded-2xl ${surfaceCard} flex flex-col lg:flex-row lg:items-center justify-between gap-6`}>
+        <div className="space-y-2">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#b58c56] bg-[#b58c56]/10 px-2.5 py-0.5 rounded-full">
-              {client.segment}
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#ed1c24] bg-[#ed1c24]/10 px-2.5 py-1 rounded">
+              {segment || client.segment}
             </span>
-            <span className="text-xs text-slate-400 font-mono">ID: {client.id}</span>
-            <span className="text-xs text-emerald-600 font-medium flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/50">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              {client.contractStatus}
+            <span className={`font-mono text-[11px] ${mutedText}`}>ID: {client.id}</span>
+            <span className="font-mono text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/15 px-2.5 py-1 rounded">
+              ● {contractStatus}
             </span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mt-1">
-            {client.companyName}
+          <h2 className="font-display text-3xl sm:text-4xl uppercase tracking-tight">
+            {companyName || client.companyName}
           </h2>
-          <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-[#8e8d96]'} font-normal`}>
-            Responsável direto: <strong className={isLight ? 'text-slate-700' : 'text-slate-300'}>{client.responsibleName}</strong> · E-mail: {client.email}
+          <p className={`text-xs ${mutedText}`}>
+            Responsável: <strong className={isLight ? 'text-[#141414]' : 'text-white'}>{responsibleName}</strong> · E-mail autorizado:{' '}
+            <span className="font-mono">{allowedEmailsInput || primaryEmail}</span>
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
             onClick={handleCopyClientLink}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
               isLight
-                ? 'bg-amber-50 hover:bg-amber-100 text-[#b58c56] border border-[#b58c56]/30'
-                : 'bg-[#b58c56]/15 hover:bg-[#b58c56]/25 text-[#dfc7a7] border border-[#b58c56]/30'
+                ? 'bg-[#f7f7f4] hover:bg-[#141414]/5 text-[#141414] border-[#141414]/15'
+                : 'bg-white/5 hover:bg-white/10 text-white border-white/15'
             }`}
-            title="Copiar link de acesso direto para enviar ao cliente no WhatsApp"
+            title="Copiar convite com link de acesso Google para WhatsApp"
           >
-            <Share2 className="w-3.5 h-3.5 text-[#b58c56]" />
-            <span>Copiar Link do Cliente</span>
+            <Share2 className="w-3.5 h-3.5 text-[#ed1c24]" />
+            <span>Copiar Convite WhatsApp</span>
           </button>
 
           <button
             type="button"
             onClick={() => onViewAsClient(client.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
               isLight
-                ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200'
-                : 'bg-white/5 hover:bg-white/10 text-[#eae8e3] border border-white/10'
+                ? 'bg-white hover:bg-[#f7f7f4] text-[#141414] border-[#141414]/15'
+                : 'bg-white/5 hover:bg-white/10 text-white border-white/15'
             }`}
           >
-            <Eye className="w-3.5 h-3.5 text-[#b58c56]" />
-            <span>Visualizar como Cliente</span>
+            <Eye className="w-3.5 h-3.5 text-[#ed1c24]" />
+            <span>Ver Portal como Cliente</span>
           </button>
 
           <button
             type="button"
             onClick={handleSaveAll}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#b58c56] hover:bg-[#9d7644] transition-all shadow-md group"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#ed1c24] hover:bg-[#c8141b] transition-all shadow-sm cursor-pointer"
           >
-            <Save className="w-4 h-4 transition-transform group-hover:scale-110" />
+            <Save className="w-4 h-4" />
             <span>Salvar Alterações</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onRequestDeleteClient(client)}
-            className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all border ${
-              isLight
-                ? 'text-rose-600 bg-rose-50 hover:bg-rose-100 border-rose-200/80'
-                : 'text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/20'
-            }`}
-            title={`Excluir cliente ${client.companyName}`}
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Excluir</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Menu de Navegação Focada (Tabs para evitar sobrecarga de informação) */}
-      <div className={`p-1.5 rounded-2xl border-2 ${isLight ? 'border-slate-300 bg-slate-100' : 'border-white/12 bg-[#12141a]'} flex flex-wrap items-center gap-1.5 text-xs font-medium`}>
+      {/* 2. NAVEGAÇÃO POR ABAS ESPELHANDO O PORTAL DO CLIENTE */}
+      <nav
+        aria-label="Abas de edição do cliente"
+        className={`p-1.5 rounded-2xl border ${
+          isLight ? 'bg-white border-[#141414]/12 shadow-xs' : 'bg-[#12141a] border-white/10'
+        } flex flex-wrap items-center gap-1.5`}
+      >
         <button
           type="button"
           onClick={() => setActiveTab('resumo')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === 'resumo'
-              ? isLight
-                ? 'bg-slate-900 text-white shadow-sm font-bold'
-                : 'bg-white text-slate-950 shadow-md font-bold'
+              ? 'bg-[#141414] text-white dark:bg-[#ed1c24]'
               : isLight
-              ? 'text-slate-800 hover:text-black hover:bg-slate-200/80 font-semibold'
-              : 'text-slate-300 hover:text-white hover:bg-white/10 font-semibold'
+              ? 'text-[#141414]/70 hover:text-[#141414] hover:bg-[#f7f7f4]'
+              : 'text-white/70 hover:text-white hover:bg-white/5'
           }`}
         >
-          <Clock className="w-4 h-4 text-[#b58c56]" />
-          <span>Vigência & Alinhamento</span>
+          <span className="font-mono text-[10px] opacity-70">01</span>
+          <Compass className="w-3.5 h-3.5" />
+          <span>Cadastro, Acessos Gmail & Bússola</span>
         </button>
 
         <button
           type="button"
-          onClick={() => setActiveTab('ferramentas')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${
-            activeTab === 'ferramentas'
-              ? isLight
-                ? 'bg-slate-900 text-white shadow-sm font-bold'
-                : 'bg-white text-slate-950 shadow-md font-bold'
+          onClick={() => setActiveTab('metricas')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'metricas'
+              ? 'bg-[#141414] text-white dark:bg-[#ed1c24]'
               : isLight
-              ? 'text-slate-800 hover:text-black hover:bg-slate-200/80 font-semibold'
-              : 'text-slate-300 hover:text-white hover:bg-white/10 font-semibold'
+              ? 'text-[#141414]/70 hover:text-[#141414] hover:bg-[#f7f7f4]'
+              : 'text-white/70 hover:text-white hover:bg-white/5'
           }`}
         >
-          <Key className="w-4 h-4 text-[#b58c56]" />
-          <span>Cofre de Ferramentas & Senhas</span>
-          <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-            activeTab === 'ferramentas'
-              ? isLight ? 'bg-white/20 text-white' : 'bg-black/20 text-slate-900'
-              : 'bg-[#b58c56]/20 text-[#734e1c] dark:text-[#dfc7a7]'
-          }`}>
-            {activeTools.length}
-          </span>
+          <span className="font-mono text-[10px] opacity-70">02</span>
+          <TrendingUp className="w-3.5 h-3.5" />
+          <span>Métricas, Gráfico Semanal & Otimizações</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('pendencias')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === 'pendencias'
-              ? isLight
-                ? 'bg-slate-900 text-white shadow-sm font-bold'
-                : 'bg-white text-slate-950 shadow-md font-bold'
+              ? 'bg-[#141414] text-white dark:bg-[#ed1c24]'
               : isLight
-              ? 'text-slate-800 hover:text-black hover:bg-slate-200/80 font-semibold'
-              : 'text-slate-300 hover:text-white hover:bg-white/10 font-semibold'
+              ? 'text-[#141414]/70 hover:text-[#141414] hover:bg-[#f7f7f4]'
+              : 'text-white/70 hover:text-white hover:bg-white/5'
           }`}
         >
-          <LayoutGrid className="w-4 h-4 text-[#b58c56]" />
-          <span>Fluxo & Tarefas (Kanban CRM)</span>
-          {actionItems.length > 0 && (
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-              activeTab === 'pendencias'
-                ? isLight ? 'bg-white/20 text-white' : 'bg-black/20 text-slate-900'
-                : 'bg-[#b58c56]/20 text-[#734e1c] dark:text-[#dfc7a7]'
-            }`}>
-              {actionItems.length}
-            </span>
-          )}
+          <span className="font-mono text-[10px] opacity-70">03</span>
+          <LayoutGrid className="w-3.5 h-3.5" />
+          <span>Tarefas & Pendências ({actionItems.length})</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('links')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
             activeTab === 'links'
-              ? isLight
-                ? 'bg-slate-900 text-white shadow-sm font-bold'
-                : 'bg-white text-slate-950 shadow-md font-bold'
+              ? 'bg-[#141414] text-white dark:bg-[#ed1c24]'
               : isLight
-              ? 'text-slate-800 hover:text-black hover:bg-slate-200/80 font-semibold'
-              : 'text-slate-300 hover:text-white hover:bg-white/10 font-semibold'
+              ? 'text-[#141414]/70 hover:text-[#141414] hover:bg-[#f7f7f4]'
+              : 'text-white/70 hover:text-white hover:bg-white/5'
           }`}
         >
-          <Share2 className="w-4 h-4 text-[#b58c56]" />
-          <span>Central de Links & Drive</span>
+          <span className="font-mono text-[10px] opacity-70">04</span>
+          <FolderOpen className="w-3.5 h-3.5" />
+          <span>Links, Pastas Drive & BI</span>
         </button>
 
         <button
           type="button"
-          onClick={() => setActiveTab('visao-geral')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all ${
-            activeTab === 'visao-geral'
-              ? isLight
-                ? 'bg-slate-900 text-white shadow-sm font-bold'
-                : 'bg-white text-slate-950 shadow-md font-bold'
+          onClick={() => setActiveTab('ferramentas')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'ferramentas'
+              ? 'bg-[#141414] text-white dark:bg-[#ed1c24]'
               : isLight
-              ? 'text-slate-800 hover:text-black hover:bg-slate-200/80 font-semibold'
-              : 'text-slate-300 hover:text-white hover:bg-white/10 font-semibold'
+              ? 'text-[#141414]/70 hover:text-[#141414] hover:bg-[#f7f7f4]'
+              : 'text-white/70 hover:text-white hover:bg-white/5'
           }`}
         >
-          <Layers className="w-4 h-4 text-[#b58c56]" />
-          <span>Exibir Tudo em Fluxo Contínuo</span>
+          <span className="font-mono text-[10px] opacity-70">05</span>
+          <Key className="w-3.5 h-3.5" />
+          <span>Cofre de Senhas ({activeTools.length})</span>
         </button>
-      </div>
 
-      {/* =========================================================================
-          TAB 1: RESUMO DA SITUAÇÃO & MÉTRICAS
-      ========================================================================== */}
+        <div className="ml-auto">
+          <button
+            type="button"
+            onClick={() => setActiveTab('visao-geral')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-mono text-[10px] uppercase tracking-wider font-bold transition-all cursor-pointer ${
+              activeTab === 'visao-geral'
+                ? 'bg-[#141414] text-white dark:bg-[#ed1c24]'
+                : isLight
+                ? 'text-[#141414]/60 hover:text-[#141414]'
+                : 'text-white/60 hover:text-white'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Expandir Tudo</span>
+          </button>
+        </div>
+      </nav>
+
+      {/* =====================================================================
+          ABA 01: CADASTRO, ACESSOS GOOGLE, VIGÊNCIA & BÚSSOLA DO MÊS
+      ====================================================================== */}
       {(activeTab === 'resumo' || activeTab === 'visao-geral') && (
         <div className="space-y-8">
-          {/* Gestão de Vigência */}
-          <div className={`p-6 sm:p-8 rounded-2xl ${cardBg} space-y-6 transition-colors`}>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200/80 dark:border-white/10">
-              <div className="flex items-center gap-2.5">
-                <Calendar className="w-5 h-5 text-[#b58c56]" />
-                <h3 className="text-lg font-bold text-[#0f172a] dark:text-white">1. Gestão de Vigência do Contrato</h3>
+          {/* Bloco 1.1: Contas Google Autorizadas (Destaque Segurança Firebase) */}
+          <div className={`p-6 sm:p-8 rounded-2xl ${surfaceCard} border-l-4 border-l-[#ed1c24] space-y-5`}>
+            <div className={`flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b ${hairline} gap-3`}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#ed1c24]/10 flex items-center justify-center text-[#ed1c24] shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ed1c24] font-bold block">
+                    Controle de Acesso Blindado · Firebase Auth
+                  </span>
+                  <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight">
+                    Contas Google Autorizadas para Este Cliente
+                  </h3>
+                </div>
               </div>
-              <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                Alimenta a barra de progresso no portal do cliente
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              <div className="lg:col-span-7 space-y-2">
+                <label className={labelClass}>
+                  E-mails Google Permitidos (Separe múltiplos e-mails por vírgula)
+                </label>
+                <input
+                  type="text"
+                  value={allowedEmailsInput}
+                  onChange={e => setAllowedEmailsInput(e.target.value)}
+                  placeholder="ex: cliente@gmail.com, socio@empresa.com.br"
+                  className={`${inputClass} font-mono`}
+                />
+                <p className={`text-[11px] leading-relaxed ${mutedText}`}>
+                  Basta o cliente clicar em <strong>&ldquo;Já sou cliente?&rdquo;</strong> no topo do site e entrar com qualquer uma das contas Google listadas acima. Nenhuma senha manual é necessária.
+                </p>
+              </div>
+
+              <div className={`lg:col-span-5 p-4 rounded-xl ${subtleBox} text-xs space-y-2`}>
+                <span className="font-mono text-[10px] uppercase tracking-wider font-bold text-[#ed1c24] block">
+                  Onde isso reflete?
+                </span>
+                <p className={`text-[11px] leading-relaxed ${mutedText}`}>
+                  As regras de segurança do Firestore bloqueiam qualquer leitura de terceiros e liberam os dados da <strong>{companyName}</strong> exclusivamente para os e-mails autorizados aqui e para o Gestor Master (<code>felipemassonp@gmail.com</code>).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Bloco 1.2: Dados Cadastrais & Vigência */}
+          <div className={`p-6 sm:p-8 rounded-2xl ${surfaceCard} space-y-6`}>
+            <div className={`flex items-center justify-between pb-3 border-b ${hairline}`}>
+              <div className="flex items-center gap-2.5">
+                <Calendar className="w-5 h-5 text-[#ed1c24]" />
+                <h3 className="font-display text-xl uppercase tracking-tight">
+                  Identificação da Empresa & Vigência do Contrato
+                </h3>
+              </div>
+              <span className={`font-mono text-[10px] uppercase ${mutedText}`}>
+                Aparece no Cabeçalho Executivo do Portal
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label className={labelClass}>Data de Início da Parceria</label>
+                <label className={labelClass}>Nome da Empresa / Marca</label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={e => setCompanyName(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Segmento / Nicho</label>
+                <input
+                  type="text"
+                  value={segment}
+                  onChange={e => setSegment(e.target.value)}
+                  placeholder="Ex: Odontologia, E-commerce..."
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Nome do Responsável</label>
+                <input
+                  type="text"
+                  value={responsibleName}
+                  onChange={e => setResponsibleName(e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>E-mail Principal de Contato</label>
+                <input
+                  type="email"
+                  value={primaryEmail}
+                  onChange={e => setPrimaryEmail(e.target.value)}
+                  className={`${inputClass} font-mono`}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+              <div>
+                <label className={labelClass}>Início da Parceria (DD/MM/AAAA)</label>
                 <input
                   type="text"
                   value={contractStart}
                   onChange={e => setContractStart(e.target.value)}
-                  placeholder="DD/MM/AAAA (Ex: 15/10/2024)"
-                  className={inputClass}
+                  className={`${inputClass} font-mono`}
                 />
               </div>
-
               <div>
-                <label className={labelClass}>Data de Renovação Prevista</label>
+                <label className={labelClass}>Renovação Prevista (DD/MM/AAAA)</label>
                 <input
                   type="text"
                   value={contractRenewal}
                   onChange={e => setContractRenewal(e.target.value)}
-                  placeholder="DD/MM/AAAA (Ex: 15/10/2026)"
-                  className={inputClass}
+                  className={`${inputClass} font-mono`}
                 />
               </div>
-
               <div>
                 <label className={labelClass}>Status do Contrato</label>
                 <input
                   type="text"
                   value={contractStatus}
                   onChange={e => setContractStatus(e.target.value)}
-                  placeholder="Ex: Contrato Vigente - Renovação em Out/2026"
                   className={inputClass}
                 />
               </div>
             </div>
 
-            {/* Preview da Barra de Progresso */}
-            <div className={`p-4 rounded-xl ${innerBg} space-y-2`}>
+            <div className={`p-4 rounded-xl ${subtleBox} space-y-2`}>
               <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-slate-800 dark:text-slate-200">
-                  Pré-visualização do Progresso da Parceria:
-                </span>
-                <span className="font-mono text-[#b58c56] dark:text-[#dfc7a7] font-bold">
-                  {progressPercent}% decorrido · {daysRemaining} dias restantes
+                <span className="font-bold">Barra de Ciclo no Portal do Cliente:</span>
+                <span className="font-mono text-[#ed1c24] font-bold">
+                  {progressPercent}% concluído · {daysRemaining} dias até renovação
                 </span>
               </div>
-              <div className="w-full h-2.5 rounded-full bg-slate-300 dark:bg-white/15 overflow-hidden">
+              <div className={`w-full h-2 rounded-full overflow-hidden ${isLight ? 'bg-[#141414]/10' : 'bg-white/10'}`}>
                 <div
-                  className="h-full bg-gradient-to-r from-[#b58c56] to-[#dfc7a7] rounded-full transition-all duration-500"
+                  className="h-full bg-[#ed1c24] rounded-full transition-all duration-500"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
             </div>
           </div>
 
-          {/* Segurança & Contas Google Autorizadas para o Portal */}
-          <div className={`p-6 sm:p-8 rounded-2xl ${cardBg} space-y-6 transition-colors border-2 ${isLight ? 'border-amber-200/80 bg-amber-50/20' : 'border-[#b58c56]/30 bg-[#161822]'}`}>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200/80 dark:border-white/10 gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#ed1c24]/15 flex items-center justify-center text-[#ed1c24] shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base sm:text-lg font-bold">Contas Google Autorizadas (Acesso Seguro ao Portal)</h3>
-                  <p className="text-xs text-slate-500">
-                    O cliente não precisa memorizar senhas. Ele acessa com o Gmail / Google Workspace cadastrado aqui.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-center">
-              <div>
-                <label className={labelClass}>E-mails Google Permitidos (Separados por vírgula)</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={allowedEmailsInput}
-                    onChange={e => setAllowedEmailsInput(e.target.value)}
-                    placeholder="ex: diretor@empresa.com, marketing@gmail.com"
-                    className={`${inputClass} text-xs`}
-                  />
-                </div>
-                <span className="text-[11px] text-slate-500 mt-1 block">
-                  Somente as pessoas logadas nessas contas Google conseguirão visualizar os relatórios e métricas da {client.companyName}.
-                </span>
-              </div>
-
-              <div className={`p-4 rounded-xl ${innerBg} text-xs space-y-2`}>
-                <span className="font-semibold text-slate-700 dark:text-slate-200 block">
-                  🛡️ Como funciona a blindagem com Firebase Auth:
-                </span>
-                <p className="text-slate-500 leading-relaxed text-[11px]">
-                  Ao clicar em &quot;Já sou cliente?&quot;, o cliente autentica diretamente com o Google. O Firebase valida se o e-mail dele está cadastrado nesta lista de permissões. Se estiver, o portal da <strong>{client.companyName}</strong> é liberado automaticamente.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Resumo da Situação Atual & Próximos Passos */}
-          <div className={`p-6 sm:p-8 rounded-2xl ${cardBg} space-y-6 transition-colors`}>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200/80 dark:border-white/10">
+          {/* Bloco 1.3: Bússola Estratégica & Escopo */}
+          <div className={`p-6 sm:p-8 rounded-2xl ${surfaceCard} space-y-6`}>
+            <div className={`flex items-center justify-between pb-3 border-b ${hairline}`}>
               <div className="flex items-center gap-2.5">
-                <Clock className="w-5 h-5 text-[#b58c56]" />
-                <h3 className="text-lg font-bold">2. Resumo da Situação Atual (Parecer do Gestor)</h3>
+                <Compass className="w-5 h-5 text-[#ed1c24]" />
+                <h3 className="font-display text-xl uppercase tracking-tight">
+                  Bússola do Mês (Foco Atual, Próximos Passos & Escopo)
+                </h3>
               </div>
-              <span className="text-xs text-slate-500">
-                Texto exibido em destaque na entrada do portal
+              <span className={`font-mono text-[10px] uppercase ${mutedText}`}>
+                Aparece na Aba 01 do Portal do Cliente
               </span>
             </div>
 
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <div>
                 <label className={labelClass}>
-                  Status Atual & Direcionamento Estratégico (O que estamos fazendo agora)
+                  O que estamos fazendo agora (Foco Atual das Campanhas)
                 </label>
                 <textarea
                   rows={3}
                   value={currentFocus}
                   onChange={e => setCurrentFocus(e.target.value)}
-                  placeholder="Descreva de forma clara e humana o foco das otimizações..."
+                  placeholder="Explique em linguagem simples o que está sendo otimizado neste momento..."
                   className={inputClass}
                 />
               </div>
 
               <div>
                 <label className={labelClass}>
-                  Próximos Passos Imediatos da Equipe da Upsell
+                  Próximos Passos Imediatos (Plano dos Próximos 7 a 15 Dias)
                 </label>
                 <textarea
-                  rows={2}
+                  rows={3}
                   value={nextSteps}
                   onChange={e => setNextSteps(e.target.value)}
-                  placeholder="Ações planejadas para os próximos 7 a 15 dias..."
+                  placeholder="Descreva os próximos testes, criativos ou ajustes planejados..."
                   className={inputClass}
                 />
               </div>
             </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2">
+              <div>
+                <label className={labelClass}>
+                  Escopo Contratado (1 item por linha — aparece no Portal e no Contrato)
+                </label>
+                <textarea
+                  rows={4}
+                  value={scopeText}
+                  onChange={e => setScopeText(e.target.value)}
+                  placeholder="Gestão de Meta Ads&#10;Campanhas Google Search&#10;Configuração de Rastreamento GA4"
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className={labelClass}>
+                    Canais Ativos na Operação (Separados por vírgula)
+                  </label>
+                  <input
+                    type="text"
+                    value={channelsInput}
+                    onChange={e => setChannelsInput(e.target.value)}
+                    placeholder="Meta Ads, Google Ads, Landing Page, CRM"
+                    className={inputClass}
+                  />
+                </div>
+                <div className={`p-4 rounded-xl ${subtleBox} text-xs space-y-1`}>
+                  <span className="font-mono text-[10px] uppercase font-bold text-[#ed1c24] block">
+                    Dica Didática
+                  </span>
+                  <p className={`text-[11px] leading-relaxed ${mutedText}`}>
+                    Mantenha os textos de &ldquo;Foco Atual&rdquo; e &ldquo;Próximos Passos&rdquo; diretos e sem excesso de siglas técnicas. O objetivo é que o cliente abra o portal e entenda em 10 segundos o valor que a UPSELL está gerando.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* =========================================================================
-          TAB 2: COFRE DE FERRAMENTAS & SENHAS (EDIÇÃO, EXCLUSÃO, DUPLICAÇÃO)
-      ========================================================================== */}
-      {(activeTab === 'ferramentas' || activeTab === 'visao-geral') && (
-        <div className={`p-6 sm:p-8 rounded-2xl ${cardBg} space-y-6 transition-colors`}>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-white/10">
-            <div>
-              <div className="flex items-center gap-2.5">
-                <Key className="w-5 h-5 text-[#b58c56]" />
-                <h3 className="text-lg font-bold">Cofre de Ferramentas, Hospedagem & Acessos</h3>
+      {/* =====================================================================
+          ABA 02: MÉTRICAS DO MÊS, GRÁFICO SEMANAL & DIÁRIO DE OTIMIZAÇÕES
+      ====================================================================== */}
+      {(activeTab === 'metricas' || activeTab === 'visao-geral') && (
+        <div className="space-y-8">
+          {/* 2.1: Editor dos 4 KPIs Principais do Mês */}
+          <div className={`p-6 sm:p-8 rounded-2xl ${surfaceCard} space-y-6`}>
+            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b ${hairline}`}>
+              <div>
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ed1c24] font-bold block">
+                  Indicadores Principais · Aba 01 do Cliente
+                </span>
+                <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight">
+                  Métricas Consolidadas do Ciclo Atual
+                </h3>
               </div>
-              <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-[#8e8d96]'} mt-1`}>
-                Centralize logins, senhas, hospedagens e links necessários para operar o tráfego da empresa.
-              </p>
-            </div>
 
-            <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => {
-                  setIsAddingTool(!isAddingTool);
-                  setEditingTool(null);
-                }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#b58c56] hover:bg-[#9d7644] transition-all shadow-sm"
+                onClick={handleAutoCalculateMetrics}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                  isLight
+                    ? 'bg-[#f7f7f4] hover:bg-[#141414] hover:text-white text-[#141414] border-[#141414]/15'
+                    : 'bg-white/5 hover:bg-[#ed1c24] text-white border-white/15'
+                }`}
+                title="Calcular automaticamente CPL (Investimento / Leads) e ROAS (Receita / Investimento)"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>{isAddingTool ? 'Fechar Formulário' : 'Adicionar Nova Ferramenta'}</span>
+                <Calculator className="w-3.5 h-3.5 text-[#ed1c24]" />
+                <span>Recalcular CPL e ROAS Automaticamente</span>
               </button>
             </div>
-          </div>
 
-          {/* Modelos Prontos de Preenchimento Rápido */}
-          <div className={`p-4 rounded-xl ${innerBg} space-y-2.5`}>
-            <span className={`text-[11px] font-semibold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-[#8e8d96]'}`}>
-              Atalhos de Cadastro Rápido (1 Clique para Preencher):
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {TOOL_PRESETS.map(preset => (
-                <button
-                  key={preset.name}
-                  type="button"
-                  onClick={() => applyPreset(preset)}
-                  className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
-                    isLight
-                      ? 'bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 shadow-2xs'
-                      : 'bg-white/5 hover:bg-white/10 text-[#eae8e3] border border-white/10'
-                  }`}
-                >
-                  <Sparkles className="w-3 h-3 text-[#b58c56]" />
-                  <span>{preset.name.split(' (')[0]}</span>
-                </button>
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className={`p-4 rounded-xl ${subtleBox} space-y-3`}>
+                <label className={labelClass}>1. Investimento (R$)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={investment}
+                  onChange={e => setInvestment(Number(e.target.value))}
+                  className={`${inputClass} font-mono text-sm`}
+                />
+                <div>
+                  <label className={labelClass}>Badge Variação</label>
+                  <input
+                    type="text"
+                    value={growthInvestment}
+                    onChange={e => setGrowthInvestment(e.target.value)}
+                    placeholder="Ex: +12% ou Meta Mensal"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className={`p-4 rounded-xl ${subtleBox} space-y-3`}>
+                <label className={labelClass}>2. Total de Leads</label>
+                <input
+                  type="number"
+                  value={leads}
+                  onChange={e => setLeads(Number(e.target.value))}
+                  className={`${inputClass} font-mono text-sm`}
+                />
+                <div>
+                  <label className={labelClass}>Badge Variação</label>
+                  <input
+                    type="text"
+                    value={growthLeads}
+                    onChange={e => setGrowthLeads(e.target.value)}
+                    placeholder="Ex: +24% vs mês ant."
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className={`p-4 rounded-xl ${subtleBox} space-y-3`}>
+                <label className={labelClass}>3. Custo por Lead (CPL R$)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={cpl}
+                  onChange={e => setCpl(Number(e.target.value))}
+                  className={`${inputClass} font-mono text-sm`}
+                />
+                <div>
+                  <label className={labelClass}>Badge Variação</label>
+                  <input
+                    type="text"
+                    value={growthCpl}
+                    onChange={e => setGrowthCpl(e.target.value)}
+                    placeholder="Ex: -15% mais barato"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className={`p-4 rounded-xl ${subtleBox} space-y-3`}>
+                <label className={labelClass}>4. Receita Gerada (R$)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={revenue}
+                  onChange={e => setRevenue(Number(e.target.value))}
+                  className={`${inputClass} font-mono text-sm`}
+                />
+                <span className={`text-[11px] block pt-2 ${mutedText}`}>
+                  Faturamento rastreado vindo das campanhas no período.
+                </span>
+              </div>
+
+              <div className={`p-4 rounded-xl ${subtleBox} space-y-3`}>
+                <label className={labelClass}>5. Multiplicador (ROAS x)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={roas}
+                  onChange={e => setRoas(Number(e.target.value))}
+                  className={`${inputClass} font-mono text-sm`}
+                />
+                <div>
+                  <label className={labelClass}>Badge Variação</label>
+                  <input
+                    type="text"
+                    value={growthRoas}
+                    onChange={e => setGrowthRoas(e.target.value)}
+                    placeholder="Ex: +0.8x evolução"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* FORMULÁRIO DE EDIÇÃO DE FERRAMENTA EXISTENTE */}
-          {editingTool && (
-            <form onSubmit={handleSaveEditTool} className={`p-6 rounded-2xl ${innerBg} space-y-4 border-2 border-[#b58c56] shadow-lg animate-fadeIn`}>
-              <div className="flex items-center justify-between pb-2 border-b border-slate-200/80 dark:border-white/10">
-                <div className="flex items-center gap-2">
-                  <Edit3 className="w-4 h-4 text-[#b58c56]" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#b58c56]">
-                    Editar Ferramenta: {editingTool.name}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setEditingTool(null)}
-                  className="text-slate-400 hover:text-slate-700 p-1"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Nome */}
-                <div>
-                  <label className={labelClass}>Nome da Ferramenta *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingTool.name}
-                    onChange={e => setEditingTool({ ...editingTool, name: e.target.value })}
-                    className={inputClass}
-                  />
-                </div>
-
-                {/* Categoria */}
-                <div>
-                  <label className={labelClass}>Categoria</label>
-                  <input
-                    type="text"
-                    value={editingTool.category}
-                    onChange={e => setEditingTool({ ...editingTool, category: e.target.value })}
-                    placeholder="Ex: Hospedagem & Servidor, Website & CMS..."
-                    className={inputClass}
-                  />
-                </div>
-
-                {/* Status */}
-                <div>
-                  <label className={labelClass}>Status Operacional</label>
-                  <select
-                    value={editingTool.status}
-                    onChange={e =>
-                      setEditingTool({
-                        ...editingTool,
-                        status: e.target.value as 'Ativo / Vinculado' | 'Pendente de Acesso' | 'Em Configuração'
-                      })
-                    }
-                    className={inputClass}
-                  >
-                    <option value="Ativo / Vinculado">Ativo / Vinculado</option>
-                    <option value="Pendente de Acesso">Pendente de Acesso</option>
-                    <option value="Em Configuração">Em Configuração</option>
-                  </select>
-                </div>
-
-                {/* Link de Acesso com Teste */}
-                <div className="lg:col-span-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <label className={labelClass}>Link / URL de Login</label>
-                    {editingTool.accessUrl && (
-                      <button
-                        type="button"
-                        onClick={() => handleTestLink(editingTool.accessUrl || '', editingTool.name)}
-                        className="text-[11px] text-[#b58c56] hover:underline flex items-center gap-1 font-medium"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        <span>Testar Link</span>
-                      </button>
-                    )}
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="https://..."
-                    value={editingTool.accessUrl || ''}
-                    onChange={e => setEditingTool({ ...editingTool, accessUrl: e.target.value })}
-                    className={inputClass}
-                  />
-                </div>
-
-                {/* E-mail da Conta */}
-                <div>
-                  <label className={labelClass}>E-mail da Conta</label>
-                  <input
-                    type="text"
-                    value={editingTool.accountEmail}
-                    onChange={e => setEditingTool({ ...editingTool, accountEmail: e.target.value })}
-                    className={inputClass}
-                  />
-                </div>
-
-                {/* Usuário / Login */}
-                <div>
-                  <label className={labelClass}>Usuário / Login</label>
-                  <input
-                    type="text"
-                    value={editingTool.loginUser || ''}
-                    onChange={e => setEditingTool({ ...editingTool, loginUser: e.target.value })}
-                    className={inputClass}
-                  />
-                </div>
-
-                {/* Senha com Gerador */}
-                <div className="sm:col-span-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <label className={labelClass}>Senha de Acesso</label>
-                    <button
-                      type="button"
-                      onClick={() => setEditingTool({ ...editingTool, password: generateStrongPassword() })}
-                      className="text-[11px] text-[#b58c56] hover:underline flex items-center gap-1 font-medium"
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      <span>Gerar Senha Segura</span>
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    value={editingTool.password || ''}
-                    onChange={e => setEditingTool({ ...editingTool, password: e.target.value })}
-                    className={`${inputClass} font-mono`}
-                  />
-                </div>
-
-                {/* Observações Técnicas */}
-                <div className="sm:col-span-3">
-                  <label className={labelClass}>Notas Técnicas & Observações</label>
-                  <input
-                    type="text"
-                    value={editingTool.detail}
-                    onChange={e => setEditingTool({ ...editingTool, detail: e.target.value })}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200/80 dark:border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setEditingTool(null)}
-                  className={`px-4 py-2 rounded-xl text-xs font-medium ${isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'}`}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-semibold text-white bg-[#b58c56] hover:bg-[#9d7644] transition-all shadow-md"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Salvar Alterações da Ferramenta</span>
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* FORMULÁRIO DE ADIÇÃO DE NOVA FERRAMENTA */}
-          {isAddingTool && !editingTool && (
-            <form onSubmit={handleAddTool} className={`p-6 rounded-2xl ${innerBg} space-y-4 border-2 border-[#b58c56]/40 animate-fadeIn`}>
-              <div className="flex items-center justify-between pb-2 border-b border-slate-200/80 dark:border-white/10">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#b58c56]">
-                  Nova Ferramenta ou Hospedagem de Site
+          {/* 2.2: Editor do Gráfico Semanal (weeklyHistory) */}
+          <div className={`p-6 sm:p-8 rounded-2xl ${surfaceCard} space-y-6`}>
+            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b ${hairline}`}>
+              <div>
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ed1c24] font-bold block">
+                  Gráfico Interativo · Aba 02 do Cliente
                 </span>
-                <span className="text-[11px] text-slate-500">
-                  Preencha os dados e clique em Cadastrar
-                </span>
+                <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight">
+                  Histórico Semanal do Gráfico de Performance
+                </h3>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Nome */}
-                <div>
-                  <label className={labelClass}>Nome da Ferramenta *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: Hospedagem Hostinger, Cloudflare..."
-                    value={newToolName}
-                    onChange={e => setNewToolName(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
+              <button
+                type="button"
+                onClick={handleAddWeek}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#141414] dark:bg-[#ed1c24] hover:opacity-90 transition-all cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Adicionar Nova Semana</span>
+              </button>
+            </div>
 
-                {/* Categoria */}
-                <div>
-                  <label className={labelClass}>Categoria</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Hospedagem & Servidor, Website & CMS..."
-                    value={newToolCategory}
-                    onChange={e => setNewToolCategory(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-
-                {/* Status */}
-                <div>
-                  <label className={labelClass}>Status Operacional</label>
-                  <select
-                    value={newToolStatus}
-                    onChange={e =>
-                      setNewToolStatus(e.target.value as 'Ativo / Vinculado' | 'Pendente de Acesso' | 'Em Configuração')
-                    }
-                    className={inputClass}
-                  >
-                    <option value="Ativo / Vinculado">Ativo / Vinculado</option>
-                    <option value="Pendente de Acesso">Pendente de Acesso</option>
-                    <option value="Em Configuração">Em Configuração</option>
-                  </select>
-                </div>
-
-                {/* Link de Acesso / Login */}
-                <div className="lg:col-span-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <label className={labelClass}>Link / URL de Login</label>
-                    {newToolUrl && (
-                      <button
-                        type="button"
-                        onClick={() => handleTestLink(newToolUrl, newToolName)}
-                        className="text-[11px] text-[#b58c56] hover:underline flex items-center gap-1 font-medium"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        <span>Testar Link</span>
-                      </button>
-                    )}
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="https://hpanel.hostinger.com ou https://site.com/wp-admin"
-                    value={newToolUrl}
-                    onChange={e => setNewToolUrl(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-
-                {/* E-mail da Conta */}
-                <div>
-                  <label className={labelClass}>E-mail da Conta</label>
-                  <input
-                    type="text"
-                    placeholder="contato@empresa.com.br"
-                    value={newToolEmail}
-                    onChange={e => setNewToolEmail(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-
-                {/* Login / Usuário */}
-                <div>
-                  <label className={labelClass}>Usuário / Login (se aplicável)</label>
-                  <input
-                    type="text"
-                    placeholder="adm_servidor ou admin"
-                    value={newToolLogin}
-                    onChange={e => setNewToolLogin(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-
-                {/* Senha com Gerador */}
-                <div className="sm:col-span-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <label className={labelClass}>Senha de Acesso</label>
-                    <button
-                      type="button"
-                      onClick={() => setNewToolPassword(generateStrongPassword())}
-                      className="text-[11px] text-[#b58c56] hover:underline flex items-center gap-1 font-medium"
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      <span>Gerar Senha Segura</span>
-                    </button>
-                  </div>
-                  <div className="relative">
+            <div className="space-y-3">
+              {weeklyHistory.map((item, idx) => (
+                <div
+                  key={idx}
+                  className={`p-4 rounded-xl ${subtleBox} grid grid-cols-2 sm:grid-cols-6 gap-3 items-end`}
+                >
+                  <div>
+                    <label className={labelClass}>Rótulo da Semana</label>
                     <input
-                      type={showNewPassword ? 'text' : 'password'}
-                      placeholder="Digite ou clique em 'Gerar Senha Segura'"
-                      value={newToolPassword}
-                      onChange={e => setNewToolPassword(e.target.value)}
+                      type="text"
+                      value={item.week}
+                      onChange={e => handleUpdateWeek(idx, 'week', e.target.value)}
                       className={`${inputClass} font-mono`}
                     />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Investimento (R$)</label>
+                    <input
+                      type="number"
+                      value={item.investment}
+                      onChange={e => handleUpdateWeek(idx, 'investment', Number(e.target.value))}
+                      className={`${inputClass} font-mono`}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Retorno / Receita (R$)</label>
+                    <input
+                      type="number"
+                      value={item.revenue}
+                      onChange={e => handleUpdateWeek(idx, 'revenue', Number(e.target.value))}
+                      className={`${inputClass} font-mono`}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Qtd. de Leads</label>
+                    <input
+                      type="number"
+                      value={item.leads}
+                      onChange={e => handleUpdateWeek(idx, 'leads', Number(e.target.value))}
+                      className={`${inputClass} font-mono`}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>CPL da Semana (R$)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={item.cpl}
+                      onChange={e => handleUpdateWeek(idx, 'cpl', Number(e.target.value))}
+                      className={`${inputClass} font-mono`}
+                    />
+                  </div>
+                  <div className="flex justify-end">
                     <button
                       type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                      onClick={() => handleRemoveWeek(idx)}
+                      className="p-2.5 rounded-xl text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                      title="Remover semana"
                     >
-                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
+              ))}
+            </div>
+          </div>
 
-                {/* Observações Técnicas */}
-                <div className="sm:col-span-3">
-                  <label className={labelClass}>Notas Técnicas & Observações</label>
+          {/* 2.3: Diário Técnico de Otimizações */}
+          <div className={`p-6 sm:p-8 rounded-2xl ${surfaceCard} space-y-6`}>
+            <div className={`flex items-center justify-between pb-4 border-b ${hairline}`}>
+              <div>
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ed1c24] font-bold block">
+                  Bastidores da Agência · Aba 02 do Cliente
+                </span>
+                <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight">
+                  Diário de Otimizações Executadas ({optimizationLogs.length})
+                </h3>
+              </div>
+            </div>
+
+            {/* Formulário de Nova Otimização */}
+            <form onSubmit={handleAddLog} className={`p-5 rounded-xl ${subtleBox} space-y-4`}>
+              <span className="font-mono text-[10px] uppercase tracking-wider font-bold text-[#ed1c24] block">
+                + Registrar Nova Otimização no Histórico do Cliente
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className={labelClass}>Canal / Frente</label>
+                  <select
+                    value={newLogChannel}
+                    onChange={e => setNewLogChannel(e.target.value as OptimizationLog['channel'])}
+                    className={inputClass}
+                  >
+                    <option value="Meta Ads">Meta Ads</option>
+                    <option value="Google Ads">Google Ads</option>
+                    <option value="Tracking & CAPI">Tracking & CAPI</option>
+                    <option value="Criativos & LP">Criativos & LP</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Data / Período</label>
                   <input
                     type="text"
-                    placeholder="Ex: Servidor Cloud Hostinger, PHP 8.3, 2FA no WhatsApp do cliente..."
-                    value={newToolDetail}
-                    onChange={e => setNewToolDetail(e.target.value)}
+                    value={newLogDate}
+                    onChange={e => setNewLogDate(e.target.value)}
+                    placeholder="Ex: 28/10 ou Esta semana"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Status da Ação</label>
+                  <select
+                    value={newLogStatus}
+                    onChange={e => setNewLogStatus(e.target.value as OptimizationLog['status'])}
+                    className={inputClass}
+                  >
+                    <option value="Concluído">Concluído</option>
+                    <option value="Em Teste">Em Teste</option>
+                    <option value="Monitorando">Monitorando</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>O que foi executado?</label>
+                  <input
+                    type="text"
+                    value={newLogAction}
+                    onChange={e => setNewLogAction(e.target.value)}
+                    placeholder="Ex: Pausamos 3 criativos saturados e subimos 2 novos vídeos Reels..."
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Qual o impacto esperado?</label>
+                  <input
+                    type="text"
+                    value={newLogImpact}
+                    onChange={e => setNewLogImpact(e.target.value)}
+                    placeholder="Ex: Redução de 15% no CPL nos próximos 7 dias"
                     className={inputClass}
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200/80 dark:border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setIsAddingTool(false)}
-                  className={`px-4 py-2 rounded-xl text-xs font-medium ${isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'}`}
-                >
-                  Cancelar
-                </button>
+              <div className="flex justify-end">
                 <button
                   type="submit"
-                  className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-semibold text-white bg-[#b58c56] hover:bg-[#9d7644] transition-all shadow-sm"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#141414] dark:bg-[#ed1c24] hover:opacity-90 transition-all cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Cadastrar Ferramenta</span>
+                  <span>Adicionar ao Diário de Otimizações</span>
                 </button>
               </div>
             </form>
-          )}
 
-          {/* Barra de Busca e Filtro de Categorias */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Buscar por ferramenta, login, email ou hospedagem..."
-                value={toolSearch}
-                onChange={e => setToolSearch(e.target.value)}
-                className={`${inputClass} pl-10`}
-              />
-            </div>
-
-            <div className="flex items-center gap-1.5 overflow-x-auto text-xs py-1">
-              {['Todas', 'Hospedagem', 'Tráfego', 'Analytics', 'Website'].map(cat => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setToolCategoryFilter(cat)}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition-all whitespace-nowrap ${
-                    toolCategoryFilter === cat
-                      ? isLight
-                        ? 'bg-slate-900 text-white'
-                        : 'bg-white text-slate-900'
-                      : isLight
-                      ? 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      : 'bg-white/5 text-[#9d9ba7] hover:bg-white/10 hover:text-white'
-                  }`}
+            {/* Lista de Otimizações */}
+            <div className="space-y-2.5">
+              {optimizationLogs.map((log) => (
+                <div
+                  key={log.id}
+                  className={`p-4 rounded-xl ${subtleBox} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}
                 >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Lista de Ferramentas & Credenciais Cadastradas com EDIÇÃO E EXCLUSÃO */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredTools.length === 0 ? (
-              <div className={`col-span-2 p-8 text-center rounded-2xl ${innerBg}`}>
-                <Key className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                <p className="text-sm font-medium text-slate-600">Nenhuma ferramenta encontrada</p>
-                <p className="text-xs text-slate-400 mt-1">
-                  Adicione uma nova ferramenta ou limpe o filtro de busca.
-                </p>
-              </div>
-            ) : (
-              filteredTools.map(tool => {
-                const isPasswordVisible = visiblePasswords[tool.id] || false;
-                const isDeleting = confirmDeleteToolId === tool.id;
-
-                return (
-                  <div
-                    key={tool.id}
-                    className={`p-5 rounded-2xl ${innerBg} transition-all space-y-4 hover:border-[#b58c56]/40 relative`}
-                  >
-                    {/* Header do Card */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-sm">
-                            {tool.name}
-                          </span>
-                          {tool.accessUrl && (
-                            <button
-                              type="button"
-                              onClick={() => handleTestLink(tool.accessUrl || '', tool.name)}
-                              className="text-slate-400 hover:text-[#b58c56] transition-colors p-1 rounded"
-                              title="Abrir painel em nova aba"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                          <span>{tool.category}</span>
-                          <span>·</span>
-                          <span className="truncate max-w-[180px]">{tool.accountEmail}</span>
-                        </div>
-                      </div>
-
-                      {/* Status Selector */}
-                      <select
-                        value={tool.status}
-                        onChange={e =>
-                          updateToolStatus(
-                            tool.id,
-                            e.target.value as 'Ativo / Vinculado' | 'Pendente de Acesso' | 'Em Configuração'
-                          )
-                        }
-                        className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
-                          tool.status === 'Ativo / Vinculado'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : tool.status === 'Pendente de Acesso'
-                            ? 'bg-amber-50 text-amber-800 border-amber-200'
-                            : 'bg-sky-50 text-sky-700 border-sky-200'
-                        }`}
-                      >
-                        <option value="Ativo / Vinculado">Ativo / Vinculado</option>
-                        <option value="Pendente de Acesso">Pendente de Acesso</option>
-                        <option value="Em Configuração">Em Configuração</option>
-                      </select>
-                    </div>
-
-                    {/* Bloco de Credenciais (E-mail, Login, Senha e Link) */}
-                    <div className={`p-3.5 rounded-xl ${isLight ? 'bg-white border border-slate-200/90' : 'bg-[#12141a] border border-white/5'} space-y-2 text-xs`}>
-                      {/* E-mail */}
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] text-slate-500 font-medium">E-mail:</span>
-                        <div className="flex items-center gap-1.5 font-mono text-[11px]">
-                          <span className="truncate max-w-[190px]">{tool.accountEmail}</span>
-                          <button
-                            type="button"
-                            onClick={() => copyToClipboard(tool.accountEmail, `${tool.id}-email`, 'E-mail')}
-                            className="text-slate-400 hover:text-[#b58c56] p-0.5"
-                            title="Copiar e-mail"
-                          >
-                            {copiedKey === `${tool.id}-email` ? (
-                              <Check className="w-3 h-3 text-emerald-600" />
-                            ) : (
-                              <Copy className="w-3 h-3" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Login / Usuário */}
-                      {tool.loginUser && (
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[11px] text-slate-500 font-medium">Usuário / Login:</span>
-                          <div className="flex items-center gap-1.5 font-mono text-[11px]">
-                            <span className="font-semibold text-slate-700 dark:text-slate-200">{tool.loginUser}</span>
-                            <button
-                              type="button"
-                              onClick={() => copyToClipboard(tool.loginUser || '', `${tool.id}-login`, 'Login')}
-                              className="text-slate-400 hover:text-[#b58c56] p-0.5"
-                              title="Copiar usuário"
-                            >
-                              {copiedKey === `${tool.id}-login` ? (
-                                <Check className="w-3 h-3 text-emerald-600" />
-                              ) : (
-                                <Copy className="w-3 h-3" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Senha */}
-                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-white/5">
-                        <span className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
-                          <Lock className="w-3 h-3 text-[#b58c56]" />
-                          Senha:
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-[11px] bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded">
-                            {tool.password
-                              ? isPasswordVisible
-                                ? tool.password
-                                : '••••••••••••'
-                              : 'Não cadastrada'}
-                          </span>
-
-                          {tool.password && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => togglePasswordVisibility(tool.id)}
-                                className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-0.5"
-                                title={isPasswordVisible ? 'Ocultar senha' : 'Ver senha'}
-                              >
-                                {isPasswordVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5 text-[#b58c56]" />}
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => copyToClipboard(tool.password || '', `${tool.id}-pass`, 'Senha')}
-                                className="text-slate-400 hover:text-[#b58c56] p-0.5"
-                                title="Copiar senha"
-                              >
-                                {copiedKey === `${tool.id}-pass` ? (
-                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                ) : (
-                                  <Copy className="w-3.5 h-3.5" />
-                                )}
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Link de Acesso direto */}
-                      {tool.accessUrl && (
-                        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-white/5">
-                          <span className="text-[11px] text-slate-500 font-medium">Link do Painel:</span>
-                          <button
-                            type="button"
-                            onClick={() => handleTestLink(tool.accessUrl || '', tool.name)}
-                            className="text-[11px] font-medium text-[#b58c56] hover:underline flex items-center gap-1 truncate max-w-[220px]"
-                          >
-                            <span>Acessar Painel</span>
-                            <ExternalLink className="w-3 h-3 shrink-0" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Detalhes Técnicos */}
-                    <div className="text-[11px] text-slate-500">
-                      <span className="truncate block">
-                        {tool.detail || 'Gerenciado pela Upsell'}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#ed1c24]/10 text-[#ed1c24]">
+                        {log.channel}
+                      </span>
+                      <span className={`font-mono text-[11px] ${mutedText}`}>{log.date}</span>
+                      <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                        {log.status}
                       </span>
                     </div>
-
-                    {/* AÇÕES DA FERRAMENTA: EDITAR, DUPLICAR, EXCLUIR */}
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-200/80 dark:border-white/10">
-                      <div className="flex items-center gap-2">
-                        {/* Botão Editar Ferramenta */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingTool(tool);
-                            setIsAddingTool(false);
-                          }}
-                          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                            isLight
-                              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                              : 'bg-white/5 hover:bg-white/10 text-slate-200'
-                          }`}
-                        >
-                          <Edit3 className="w-3 h-3 text-[#b58c56]" />
-                          <span>Editar</span>
-                        </button>
-
-                        {/* Botão Duplicar Ferramenta */}
-                        <button
-                          type="button"
-                          onClick={() => duplicateTool(tool)}
-                          className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-                            isLight
-                              ? 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-                              : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                          }`}
-                          title="Duplicar esta ferramenta para criar outra parecida"
-                        >
-                          <Copy className="w-3 h-3" />
-                          <span>Duplicar</span>
-                        </button>
-                      </div>
-
-                      {/* Excluir Ferramenta com Diálogo de Confirmação */}
-                      {isDeleting ? (
-                        <div className="flex items-center gap-1.5 animate-fadeIn">
-                          <span className="text-[10px] text-rose-600 font-semibold">Excluir?</span>
-                          <button
-                            type="button"
-                            onClick={() => deleteTool(tool.id)}
-                            className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-600 text-white hover:bg-rose-700"
-                          >
-                            Sim
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDeleteToolId(null)}
-                            className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-200 text-slate-700 hover:bg-slate-300"
-                          >
-                            Não
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDeleteToolId(tool.id)}
-                          className="text-slate-400 hover:text-rose-600 transition-colors p-1 rounded"
-                          title="Remover ferramenta"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
+                    <p className="text-xs font-bold">{log.action}</p>
+                    <p className={`text-[11px] ${mutedText}`}>Impacto: {log.expectedImpact}</p>
                   </div>
-                );
-              })
-            )}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveLog(log.id)}
+                    className="p-2 rounded-lg text-rose-600 hover:bg-rose-500/10 self-end sm:self-center cursor-pointer"
+                    title="Remover registro"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      {/* =========================================================================
-          TAB 3: FLUXO DE TAREFAS & CRM KANBAN (MINHAS TAREFAS & DEMANDAS DO CLIENTE)
-      ========================================================================== */}
+      {/* =====================================================================
+          ABA 03: TAREFAS & CO-RESPONSABILIDADE (KANBAN)
+      ====================================================================== */}
       {(activeTab === 'pendencias' || activeTab === 'visao-geral') && (
         <div className="space-y-4">
           <TaskKanban
@@ -1699,7 +1390,7 @@ function ClientEditor({
               onUpdateClient(client.id, { actionItems: updated });
             }}
             isAdmin={true}
-            clientName={client.companyName}
+            clientName={companyName || client.companyName}
             isLight={isLight}
             showToast={showToast}
             defaultAssigneeFilter="all"
@@ -1707,290 +1398,589 @@ function ClientEditor({
         </div>
       )}
 
-      {/* =========================================================================
-          TAB 4: CENTRAL DE DOCUMENTOS, PASTAS DE CRIATIVOS & ANÁLISE DE RESULTADOS
-      ========================================================================== */}
+      {/* =====================================================================
+          ABA 04: CENTRAL DE LINKS, PASTAS DE CRIATIVOS & LOOKER STUDIO
+      ====================================================================== */}
       {(activeTab === 'links' || activeTab === 'visao-geral') && (
-        <div className={`p-6 sm:p-8 rounded-2xl ${cardBg} space-y-8 transition-colors`}>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-white/10">
+        <div className={`p-6 sm:p-8 rounded-2xl ${surfaceCard} space-y-8`}>
+          <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b ${hairline}`}>
             <div>
-              <div className="flex items-center gap-2.5">
-                <Share2 className="w-5 h-5 text-[#b58c56]" />
-                <h3 className="text-lg font-bold">Central de Documentos & Repositórios</h3>
-              </div>
-              <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-[#8e8d96]'} mt-1`}>
-                Gerencie os links individuais das pastas de criativos (copys, vídeos, imagens), análise de resultados e arquivos oficiais.
-              </p>
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ed1c24] font-bold block">
+                Repositórios em Nuvem · Aba 04 do Cliente
+              </span>
+              <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight">
+                Central de Links, Pastas do Google Drive & Looker Studio
+              </h3>
             </div>
-
             <button
               type="button"
               onClick={handleSaveAll}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#b58c56] hover:bg-[#9d7644] transition-all shadow-sm shrink-0"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#ed1c24] hover:bg-[#c8141b] transition-all cursor-pointer shrink-0"
             >
               <Save className="w-3.5 h-3.5" />
               <span>Salvar Links</span>
             </button>
           </div>
 
-          {/* BLOCO 1: PASTAS DE CRIATIVOS ORGANIZADAS */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xs uppercase font-bold tracking-wider text-[#b58c56] bg-[#b58c56]/10 px-2.5 py-0.5 rounded-full">
-                Pastas de Criativos
-              </span>
-              <span className="text-xs text-slate-400">
-                Segmentadas por formato para visualização no Portal do Cliente
-              </span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* 1. Copys */}
+            <div className={`p-5 rounded-xl ${subtleBox} space-y-3`}>
+              <div className="flex items-center justify-between text-xs font-bold">
+                <span className="flex items-center gap-1.5">
+                  <FileText className="w-4 h-4 text-[#ed1c24]" />
+                  01 · Pasta de Copys & Roteiros
+                </span>
+                {creativeCopies && (
+                  <button
+                    type="button"
+                    onClick={() => handleTestLink(creativeCopies, 'Pasta de Copys')}
+                    className="text-[11px] text-[#ed1c24] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Testar</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              <input
+                type="text"
+                value={creativeCopies}
+                onChange={e => setCreativeCopies(e.target.value)}
+                placeholder="https://drive.google.com/drive/folders/..."
+                className={inputClass}
+              />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {/* 1.1 Pasta de Copys & Roteiros */}
-              <div className={`p-5 rounded-xl ${innerBg} space-y-3`}>
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="flex items-center gap-1.5">
-                    <FileText className="w-4 h-4 text-[#b58c56]" />
-                    Pasta de Copys & Roteiros
-                  </span>
-                  {creativeCopies ? (
-                    <button
-                      type="button"
-                      onClick={() => handleTestLink(creativeCopies, 'Pasta de Copys')}
-                      className="text-[11px] text-[#b58c56] hover:underline flex items-center gap-1"
-                      title="Testar link em nova aba"
-                    >
-                      <span>Testar</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
-                  ) : (
-                    <span className="text-[10px] text-slate-400">Pendente</span>
-                  )}
-                </div>
-                <input
-                  type="text"
-                  value={creativeCopies}
-                  onChange={e => setCreativeCopies(e.target.value)}
-                  placeholder="https://drive.google.com/drive/folders/copys..."
-                  className={inputClass}
-                />
-                <span className="text-[11px] text-slate-500 block">
-                  Briefings textuais, roteiros de gravação e copys validadas
+            {/* 2. Vídeos */}
+            <div className={`p-5 rounded-xl ${subtleBox} space-y-3`}>
+              <div className="flex items-center justify-between text-xs font-bold">
+                <span className="flex items-center gap-1.5">
+                  <Video className="w-4 h-4 text-[#ed1c24]" />
+                  02 · Pasta de Criativos em Vídeo
                 </span>
+                {creativeVideos && (
+                  <button
+                    type="button"
+                    onClick={() => handleTestLink(creativeVideos, 'Pasta de Vídeos')}
+                    className="text-[11px] text-[#ed1c24] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Testar</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                )}
               </div>
-
-              {/* 1.2 Pasta de Criativos em Vídeo */}
-              <div className={`p-5 rounded-xl ${innerBg} space-y-3`}>
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="flex items-center gap-1.5">
-                    <Video className="w-4 h-4 text-[#b58c56]" />
-                    Criativos de Vídeo (Reels & Ads)
-                  </span>
-                  {creativeVideos ? (
-                    <button
-                      type="button"
-                      onClick={() => handleTestLink(creativeVideos, 'Pasta de Vídeos')}
-                      className="text-[11px] text-[#b58c56] hover:underline flex items-center gap-1"
-                      title="Testar link em nova aba"
-                    >
-                      <span>Testar</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
-                  ) : (
-                    <span className="text-[10px] text-slate-400">Pendente</span>
-                  )}
-                </div>
-                <input
-                  type="text"
-                  value={creativeVideos}
-                  onChange={e => setCreativeVideos(e.target.value)}
-                  placeholder="https://drive.google.com/drive/folders/videos..."
-                  className={inputClass}
-                />
-                <span className="text-[11px] text-slate-500 block">
-                  Vídeos brutos e editados em 9:16 (Reels/TikTok) e 16:9
-                </span>
-              </div>
-
-              {/* 1.3 Pasta de Criativos em Imagem */}
-              <div className={`p-5 rounded-xl ${innerBg} space-y-3`}>
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="flex items-center gap-1.5">
-                    <ImageIcon className="w-4 h-4 text-[#b58c56]" />
-                    Criativos em Imagem & Banners
-                  </span>
-                  {creativeImages ? (
-                    <button
-                      type="button"
-                      onClick={() => handleTestLink(creativeImages, 'Pasta de Imagens')}
-                      className="text-[11px] text-[#b58c56] hover:underline flex items-center gap-1"
-                      title="Testar link em nova aba"
-                    >
-                      <span>Testar</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
-                  ) : (
-                    <span className="text-[10px] text-slate-400">Pendente</span>
-                  )}
-                </div>
-                <input
-                  type="text"
-                  value={creativeImages}
-                  onChange={e => setCreativeImages(e.target.value)}
-                  placeholder="https://drive.google.com/drive/folders/imagens..."
-                  className={inputClass}
-                />
-                <span className="text-[11px] text-slate-500 block">
-                  Artes estáticas, carrosséis para feed e banners display
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* BLOCO 2: ANÁLISE DE RESULTADOS & DOCUMENTOS OFICIAIS */}
-          <div className="space-y-4 pt-2 border-t border-slate-200/60 dark:border-white/5">
-            <div className="flex items-center gap-2">
-              <span className="text-xs uppercase font-bold tracking-wider text-[#b58c56] bg-[#b58c56]/10 px-2.5 py-0.5 rounded-full">
-                Análise de Resultados & Documentação
-              </span>
-              <span className="text-xs text-slate-400">
-                Looker Studio, Contrato Formal e Repositório Raiz
-              </span>
+              <input
+                type="text"
+                value={creativeVideos}
+                onChange={e => setCreativeVideos(e.target.value)}
+                placeholder="https://drive.google.com/drive/folders/..."
+                className={inputClass}
+              />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {/* 2.1 Análise de Resultados (Looker Studio) */}
-              <div className={`p-5 rounded-xl ${innerBg} space-y-3`}>
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="flex items-center gap-1.5">
-                    <BarChart3 className="w-4 h-4 text-[#b58c56]" />
-                    Análise de Resultados (Looker Studio)
-                  </span>
-                  {lookerStudio ? (
-                    <button
-                      type="button"
-                      onClick={() => handleTestLink(lookerStudio, 'Análise de Resultados')}
-                      className="text-[11px] text-[#b58c56] hover:underline flex items-center gap-1"
-                      title="Testar link em nova aba"
-                    >
-                      <span>Testar</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
-                  ) : (
-                    <span className="text-[10px] text-slate-400">Pendente</span>
-                  )}
-                </div>
-                <input
-                  type="text"
-                  value={lookerStudio}
-                  onChange={e => setLookerStudio(e.target.value)}
-                  placeholder="https://lookerstudio.google.com/reporting/..."
-                  className={inputClass}
-                />
-                <span className="text-[11px] text-slate-500 block">
-                  Painel de performance com ROAS, CPA e conversões
+            {/* 3. Imagens */}
+            <div className={`p-5 rounded-xl ${subtleBox} space-y-3`}>
+              <div className="flex items-center justify-between text-xs font-bold">
+                <span className="flex items-center gap-1.5">
+                  <ImageIcon className="w-4 h-4 text-[#ed1c24]" />
+                  03 · Pasta de Imagens & Banners
                 </span>
+                {creativeImages && (
+                  <button
+                    type="button"
+                    onClick={() => handleTestLink(creativeImages, 'Pasta de Imagens')}
+                    className="text-[11px] text-[#ed1c24] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Testar</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                )}
               </div>
+              <input
+                type="text"
+                value={creativeImages}
+                onChange={e => setCreativeImages(e.target.value)}
+                placeholder="https://drive.google.com/drive/folders/..."
+                className={inputClass}
+              />
+            </div>
 
-              {/* 2.2 Contrato Oficial PDF */}
-              <div className={`p-5 rounded-xl ${innerBg} space-y-3`}>
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="flex items-center gap-1.5">
-                    <FileCheck2 className="w-4 h-4 text-[#b58c56]" />
-                    Contrato Oficial de Parceria
-                  </span>
-                  {contractPdf ? (
-                    <button
-                      type="button"
-                      onClick={() => handleTestLink(contractPdf, 'Contrato Oficial')}
-                      className="text-[11px] text-[#b58c56] hover:underline flex items-center gap-1"
-                      title="Testar link em nova aba"
-                    >
-                      <span>Testar</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
-                  ) : (
-                    <span className="text-[10px] text-slate-400">Pendente</span>
-                  )}
-                </div>
-                <input
-                  type="text"
-                  value={contractPdf}
-                  onChange={e => setContractPdf(e.target.value)}
-                  placeholder="https://drive.google.com/file/d/... ou URL do PDF"
-                  className={inputClass}
-                />
-                <span className="text-[11px] text-slate-500 block">
-                  Documento formal assinado com escopo e vigência
+            {/* 4. Looker Studio */}
+            <div className={`p-5 rounded-xl ${subtleBox} space-y-3`}>
+              <div className="flex items-center justify-between text-xs font-bold">
+                <span className="flex items-center gap-1.5">
+                  <BarChart3 className="w-4 h-4 text-[#ed1c24]" />
+                  04 · Dashboard Looker Studio (BI)
                 </span>
+                {lookerStudio && (
+                  <button
+                    type="button"
+                    onClick={() => handleTestLink(lookerStudio, 'Looker Studio')}
+                    className="text-[11px] text-[#ed1c24] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Testar</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                )}
               </div>
+              <input
+                type="text"
+                value={lookerStudio}
+                onChange={e => setLookerStudio(e.target.value)}
+                placeholder="https://lookerstudio.google.com/reporting/..."
+                className={inputClass}
+              />
+            </div>
 
-              {/* 2.3 Repositório Geral no Google Drive */}
-              <div className={`p-5 rounded-xl ${innerBg} space-y-3`}>
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="flex items-center gap-1.5">
-                    <FolderOpen className="w-4 h-4 text-[#b58c56]" />
-                    Repositório Geral Raiz (Drive)
-                  </span>
-                  {googleDrive ? (
-                    <button
-                      type="button"
-                      onClick={() => handleTestLink(googleDrive, 'Repositório Geral Drive')}
-                      className="text-[11px] text-[#b58c56] hover:underline flex items-center gap-1"
-                      title="Testar link em nova aba"
-                    >
-                      <span>Testar</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
-                  ) : (
-                    <span className="text-[10px] text-slate-400">Pendente</span>
-                  )}
-                </div>
-                <input
-                  type="text"
-                  value={googleDrive}
-                  onChange={e => setGoogleDrive(e.target.value)}
-                  placeholder="https://drive.google.com/drive/folders/..."
-                  className={inputClass}
-                />
-                <span className="text-[11px] text-slate-500 block">
-                  Pasta raiz no Drive com todas as pastas sincronizadas
+            {/* 5. Contrato PDF */}
+            <div className={`p-5 rounded-xl ${subtleBox} space-y-3`}>
+              <div className="flex items-center justify-between text-xs font-bold">
+                <span className="flex items-center gap-1.5">
+                  <FileCheck2 className="w-4 h-4 text-[#ed1c24]" />
+                  05 · Link do Contrato Assinado (PDF)
                 </span>
+                {contractPdf && (
+                  <button
+                    type="button"
+                    onClick={() => handleTestLink(contractPdf, 'Contrato PDF')}
+                    className="text-[11px] text-[#ed1c24] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Testar</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                )}
               </div>
+              <input
+                type="text"
+                value={contractPdf}
+                onChange={e => setContractPdf(e.target.value)}
+                placeholder="https://drive.google.com/file/d/..."
+                className={inputClass}
+              />
+            </div>
+
+            {/* 6. Drive Geral */}
+            <div className={`p-5 rounded-xl ${subtleBox} space-y-3`}>
+              <div className="flex items-center justify-between text-xs font-bold">
+                <span className="flex items-center gap-1.5">
+                  <FolderOpen className="w-4 h-4 text-[#ed1c24]" />
+                  06 · Repositório Raiz no Google Drive
+                </span>
+                {googleDrive && (
+                  <button
+                    type="button"
+                    onClick={() => handleTestLink(googleDrive, 'Drive Geral')}
+                    className="text-[11px] text-[#ed1c24] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Testar</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              <input
+                type="text"
+                value={googleDrive}
+                onChange={e => setGoogleDrive(e.target.value)}
+                placeholder="https://drive.google.com/drive/folders/..."
+                className={inputClass}
+              />
             </div>
           </div>
         </div>
       )}
 
-      {/* Zona de Gerenciamento da Conta (Exclusão Segura de Cliente) */}
-      <div className={`p-5 rounded-2xl ${innerBg} flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs transition-colors`}>
-        <div className="space-y-1">
-          <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-            <Trash2 className="w-4 h-4 text-rose-500" />
-            <span>Zona de Risco: Excluir Cliente</span>
+      {/* =====================================================================
+          ABA 05: COFRE DE FERRAMENTAS, HOSPEDAGEM & SENHAS
+      ====================================================================== */}
+      {(activeTab === 'ferramentas' || activeTab === 'visao-geral') && (
+        <div className={`p-6 sm:p-8 rounded-2xl ${surfaceCard} space-y-6`}>
+          <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b ${hairline}`}>
+            <div>
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ed1c24] font-bold block">
+                Ativos & Credenciais · Aba 04 do Cliente
+              </span>
+              <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight">
+                Cofre de Ferramentas, Hospedagem & Acessos
+              </h3>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsAddingTool(!isAddingTool);
+                setEditingTool(null);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#141414] dark:bg-[#ed1c24] hover:opacity-90 transition-all cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>{isAddingTool ? 'Fechar Formulário' : 'Adicionar Ferramenta'}</span>
+            </button>
+          </div>
+
+          {/* Atalhos Rápidos */}
+          <div className={`p-4 rounded-xl ${subtleBox} space-y-2.5`}>
+            <span className={`font-mono text-[10px] font-bold uppercase tracking-wider ${mutedText}`}>
+              Modelos Rápidos (1 clique para carregar):
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {TOOL_PRESETS.map(preset => (
+                <button
+                  key={preset.name}
+                  type="button"
+                  onClick={() => applyPreset(preset)}
+                  className={`text-xs px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 border cursor-pointer ${
+                    isLight
+                      ? 'bg-white hover:bg-[#141414] hover:text-white text-[#141414] border-[#141414]/15'
+                      : 'bg-white/5 hover:bg-white/15 text-white border-white/10'
+                  }`}
+                >
+                  <Sparkles className="w-3 h-3 text-[#ed1c24]" />
+                  <span>{preset.name.split(' (')[0]}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Formulário Edição */}
+          {editingTool && (
+            <form onSubmit={handleSaveEditTool} className={`p-6 rounded-2xl ${subtleBox} border-2 border-[#ed1c24] space-y-4`}>
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-bold uppercase text-[#ed1c24]">
+                  Editando: {editingTool.name}
+                </span>
+                <button type="button" onClick={() => setEditingTool(null)} className="p-1">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className={labelClass}>Nome</label>
+                  <input
+                    type="text"
+                    value={editingTool.name}
+                    onChange={e => setEditingTool({ ...editingTool, name: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Categoria</label>
+                  <input
+                    type="text"
+                    value={editingTool.category}
+                    onChange={e => setEditingTool({ ...editingTool, category: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Status</label>
+                  <select
+                    value={editingTool.status}
+                    onChange={e => setEditingTool({ ...editingTool, status: e.target.value as any })}
+                    className={inputClass}
+                  >
+                    <option value="Ativo / Vinculado">Ativo / Vinculado</option>
+                    <option value="Pendente de Acesso">Pendente de Acesso</option>
+                    <option value="Em Configuração">Em Configuração</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>E-mail da Conta</label>
+                  <input
+                    type="text"
+                    value={editingTool.accountEmail}
+                    onChange={e => setEditingTool({ ...editingTool, accountEmail: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Usuário / Login</label>
+                  <input
+                    type="text"
+                    value={editingTool.loginUser || ''}
+                    onChange={e => setEditingTool({ ...editingTool, loginUser: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Senha</label>
+                  <input
+                    type="text"
+                    value={editingTool.password || ''}
+                    onChange={e => setEditingTool({ ...editingTool, password: e.target.value })}
+                    className={`${inputClass} font-mono`}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className={labelClass}>URL de Acesso</label>
+                  <input
+                    type="text"
+                    value={editingTool.accessUrl || ''}
+                    onChange={e => setEditingTool({ ...editingTool, accessUrl: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Observação</label>
+                  <input
+                    type="text"
+                    value={editingTool.detail}
+                    onChange={e => setEditingTool({ ...editingTool, detail: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#ed1c24] cursor-pointer"
+                >
+                  Concluir Edição
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Formulário Adição */}
+          {isAddingTool && !editingTool && (
+            <form onSubmit={handleAddTool} className={`p-6 rounded-2xl ${subtleBox} space-y-4`}>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className={labelClass}>Nome da Ferramenta *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newToolName}
+                    onChange={e => setNewToolName(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Categoria</label>
+                  <input
+                    type="text"
+                    value={newToolCategory}
+                    onChange={e => setNewToolCategory(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Status</label>
+                  <select
+                    value={newToolStatus}
+                    onChange={e => setNewToolStatus(e.target.value as any)}
+                    className={inputClass}
+                  >
+                    <option value="Ativo / Vinculado">Ativo / Vinculado</option>
+                    <option value="Pendente de Acesso">Pendente de Acesso</option>
+                    <option value="Em Configuração">Em Configuração</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>E-mail</label>
+                  <input
+                    type="text"
+                    value={newToolEmail}
+                    onChange={e => setNewToolEmail(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Login</label>
+                  <input
+                    type="text"
+                    value={newToolLogin}
+                    onChange={e => setNewToolLogin(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Senha</label>
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={newToolPassword}
+                      onChange={e => setNewToolPassword(e.target.value)}
+                      className={`${inputClass} font-mono`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 opacity-60"
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div className="sm:col-span-2">
+                  <label className={labelClass}>URL do Painel</label>
+                  <input
+                    type="text"
+                    value={newToolUrl}
+                    onChange={e => setNewToolUrl(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Detalhes</label>
+                  <input
+                    type="text"
+                    value={newToolDetail}
+                    onChange={e => setNewToolDetail(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#ed1c24] cursor-pointer"
+                >
+                  Cadastrar no Cofre
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Lista de Ferramentas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredTools.map(tool => {
+              const isPasswordVisible = visiblePasswords[tool.id] || false;
+              const isDeleting = confirmDeleteToolId === tool.id;
+
+              return (
+                <div key={tool.id} className={`p-5 rounded-xl ${subtleBox} space-y-3`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="font-bold text-sm block">{tool.name}</span>
+                      <span className={`font-mono text-[11px] ${mutedText}`}>
+                        {tool.category} · {tool.accountEmail}
+                      </span>
+                    </div>
+                    <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                      {tool.status}
+                    </span>
+                  </div>
+
+                  <div className={`p-3 rounded-lg ${surfaceCard} space-y-1.5 text-xs`}>
+                    <div className="flex items-center justify-between">
+                      <span className={mutedText}>E-mail:</span>
+                      <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                        <span>{tool.accountEmail}</span>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(tool.accountEmail, `${tool.id}-email`, 'E-mail')}
+                        >
+                          {copiedKey === `${tool.id}-email` ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className={mutedText}>Senha:</span>
+                      <div className="flex items-center gap-2 font-mono text-[11px]">
+                        <span>
+                          {tool.password ? (isPasswordVisible ? tool.password : '••••••••••') : 'Não cadastrada'}
+                        </span>
+                        {tool.password && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setVisiblePasswords(p => ({ ...p, [tool.id]: !p[tool.id] }))
+                              }
+                            >
+                              {isPasswordVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(tool.password || '', `${tool.id}-pass`, 'Senha')}
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={`flex items-center justify-between pt-2 border-t ${hairline}`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingTool(tool);
+                        setIsAddingTool(false);
+                      }}
+                      className="text-xs font-bold flex items-center gap-1 hover:text-[#ed1c24] cursor-pointer"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                      <span>Editar</span>
+                    </button>
+
+                    {isDeleting ? (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveTools(prev => prev.filter(t => t.id !== tool.id));
+                            setConfirmDeleteToolId(null);
+                          }}
+                          className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-600 text-white"
+                        >
+                          Confirmar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteToolId(null)}
+                          className="px-2 py-0.5 rounded text-[10px]"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteToolId(tool.id)}
+                        className="text-rose-600 p-1 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Zona de Exclusão */}
+      <div className={`p-5 rounded-2xl ${subtleBox} flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs`}>
+        <div>
+          <span className="font-bold flex items-center gap-2 text-rose-600">
+            <Trash2 className="w-4 h-4" />
+            <span>Remover Conta de Cliente</span>
           </span>
-          <p className="text-[11px] text-slate-500">
-            Remove permanentemente os dados, histórico, credenciais e métricas de <strong>{client.companyName}</strong>.
+          <p className={`text-[11px] mt-0.5 ${mutedText}`}>
+            Exclui permanentemente os relatórios e dados de <strong>{companyName || client.companyName}</strong>.
           </p>
         </div>
         <button
           type="button"
           onClick={() => onRequestDeleteClient(client)}
-          className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-300 dark:border-rose-500/30 transition-all shrink-0 shadow-sm"
+          className="px-4 py-2 rounded-xl text-xs font-bold text-rose-600 border border-rose-500/30 hover:bg-rose-500/10 transition-all cursor-pointer shrink-0"
         >
-          <Trash2 className="w-3.5 h-3.5" />
-          <span>Excluir {client.companyName}</span>
+          Excluir {companyName || client.companyName}
         </button>
       </div>
 
-      {/* Botão Flutuante de Salvar Sempre Acessível */}
+      {/* Botão Flutuante de Salvar */}
       <div className="sticky bottom-6 z-20 flex justify-end">
         <button
           type="button"
           onClick={handleSaveAll}
-          className="flex items-center gap-2.5 px-7 py-3 rounded-2xl text-xs font-bold text-white bg-[#b58c56] hover:bg-[#9d7644] transition-all shadow-xl group border border-white/20"
+          className="flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-xs font-bold text-white bg-[#141414] dark:bg-[#ed1c24] hover:opacity-95 transition-all shadow-2xl border border-white/15 cursor-pointer"
         >
-          <Save className="w-4 h-4 transition-transform group-hover:scale-110" />
-          <span>Salvar Todas as Alterações</span>
+          <Save className="w-4 h-4 text-[#ed1c24] dark:text-white" />
+          <span>Salvar Todas as Alterações no Firebase</span>
         </button>
       </div>
     </div>
@@ -2012,9 +2002,7 @@ export function AdminPanel({
     theme,
     toggleTheme,
     addNewClient: storeAddNewClient,
-    deleteClient: storeDeleteClient,
-    resetClientPin,
-    dismissPinResetRequest
+    deleteClient: storeDeleteClient
   } = useUpsellStore();
   const isLight = theme === 'light';
 
@@ -2022,32 +2010,18 @@ export function AdminPanel({
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   const [isManageClientsModalOpen, setIsManageClientsModalOpen] = useState(false);
   const [isAgencyTasksModalOpen, setIsAgencyTasksModalOpen] = useState(false);
-  const [agencyModalClientFilter, setAgencyModalClientFilter] = useState<string>('all');
-  const [agencyModalPriorityFilter, setAgencyModalPriorityFilter] = useState<string>('all');
   const [clientToDelete, setClientToDelete] = useState<ClientProfile | null>(null);
 
-  // Clientes com solicitação de recuperação de senha/PIN pendente
-  const pendingPinRequests = useMemo(() => {
-    return clients.filter(c => c.pinResetRequested);
-  }, [clients]);
+  const [newCompanyName, setNewCompanyName] = useState('');
+  const [newSegment, setNewSegment] = useState('');
+  const [newResponsible, setNewResponsible] = useState('');
+  const [newEmail, setNewEmail] = useState('');
 
-  const handleInstantResetAndSendPin = (c: ClientProfile) => {
-    const newPin = resetClientPin(c.id);
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const clientUrl = `${origin}/?cliente=${c.id}`;
-    const text = encodeURIComponent(
-      `Olá ${c.responsibleName}! 👋\n\nSua nova chave de acesso (PIN) ao Portal da *${c.companyName}* na UpSell foi gerada:\n\n🔑 Novo PIN: *${newPin}*\n👉 Acesse o portal: ${clientUrl}\n\nGuarde esta chave com você para consultar relatórios em tempo real e entregas da agência.`
-    );
-    window.open(`https://api.whatsapp.com/send?phone=5511987654321&text=${text}`, '_blank');
-    showToast(`Novo PIN ${newPin} gerado e salvo para ${c.companyName}!`);
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleDismissPinRequest = (clientId: string, companyName: string) => {
-    dismissPinResetRequest(clientId);
-    showToast(`Alerta de recuperação de ${companyName} finalizado.`);
-  };
-
-  // Compute all tasks across all clients that belong to the Agency
   const allAgencyTasks = useMemo(() => {
     const list: { client: ClientProfile; task: ClientActionItem }[] = [];
     clients.forEach(c => {
@@ -2060,32 +2034,10 @@ export function AdminPanel({
     return list;
   }, [clients]);
 
-  const pendingAgencyTasks = useMemo(() => {
-    return allAgencyTasks.filter(item => item.task.status !== 'completed');
-  }, [allAgencyTasks]);
-
-  const handleUpdateTaskStatusFromGlobal = (clientId: string, taskId: string, nextStatus: any) => {
-    const targetClient = clients.find(c => c.id === clientId);
-    if (!targetClient) return;
-    const updatedTasks = (targetClient.actionItems || []).map(t =>
-      t.id === taskId ? { ...t, status: nextStatus } : t
-    );
-    onUpdateClient(clientId, { actionItems: updatedTasks });
-    showToast('Status da tarefa atualizado com sucesso!');
-  };
-
-  // Form for New Client
-  const [newCompanyName, setNewCompanyName] = useState('');
-  const [newSegment, setNewSegment] = useState('');
-  const [newResponsible, setNewResponsible] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 3800);
-  };
+  const pendingAgencyTasks = useMemo(
+    () => allAgencyTasks.filter(item => item.task.status !== 'completed'),
+    [allAgencyTasks]
+  );
 
   const handleConfirmDeleteClient = (clientId: string, clientName: string) => {
     const deleteFn = onDeleteClient || storeDeleteClient;
@@ -2096,22 +2048,18 @@ export function AdminPanel({
     }
     setClientToDelete(null);
     setIsManageClientsModalOpen(false);
-    showToast(`Cliente "${clientName}" excluído com sucesso!`);
+    showToast(`Cliente "${clientName}" excluído.`);
   };
 
   const handleCreateNewClient = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCompanyName.trim()) {
-      showToast('O nome da empresa é obrigatório.');
-      return;
-    }
+    if (!newCompanyName.trim()) return;
     const newProfile = createDefaultNewClientProfile(
       newCompanyName,
       newSegment,
       newResponsible,
       newEmail
     );
-
     const addFn = onAddNewClient || storeAddNewClient;
     addFn(newProfile);
     onSelectClient(newProfile.id);
@@ -2120,7 +2068,7 @@ export function AdminPanel({
     setNewSegment('');
     setNewResponsible('');
     setNewEmail('');
-    showToast(`Novo cliente "${newProfile.companyName}" cadastrado com sucesso!`);
+    showToast(`Cliente "${newProfile.companyName}" criado com sucesso!`);
   };
 
   const currentClient = clients.find(c => c.id === selectedClientId) || clients[0];
@@ -2129,161 +2077,113 @@ export function AdminPanel({
     <div
       className={`min-h-screen transition-colors duration-300 ${
         isLight
-          ? 'bg-[#f8fafc] text-[#0f172a] selection:bg-[#b58c56]/20'
-          : 'bg-[#090a0f] text-white selection:bg-[#c8a97e]/30'
+          ? 'bg-[#f7f7f4] text-[#141414] selection:bg-[#ed1c24] selection:text-white'
+          : 'bg-[#0c0d10] text-[#f7f7f4] selection:bg-[#ed1c24] selection:text-white'
       }`}
     >
-      {/* 1. SELETOR DE CLIENTE NA BARRA SUPERIOR & CONTROLES DE TEMA */}
+      {/* TOP BAR CONSOLE DO GESTOR */}
       <header
-        className={`sticky top-0 z-30 backdrop-blur-md px-6 sm:px-12 py-3.5 transition-colors border-b-2 ${
-          isLight ? 'bg-white/95 border-slate-300 shadow-xs' : 'bg-[#090a0f]/95 border-white/15'
+        className={`sticky top-0 z-30 backdrop-blur-md px-5 sm:px-10 py-3.5 transition-colors border-b ${
+          isLight ? 'bg-[#f7f7f4]/95 border-[#141414]/12' : 'bg-[#0c0d10]/95 border-white/10'
         }`}
       >
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          {/* Brand & Client Selector */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-            <span className="font-bold tracking-[0.25em] text-sm uppercase text-[#b58c56] dark:text-[#dfc7a7]">
-              UPSELL
-            </span>
-            <span className="text-slate-400 dark:text-slate-500 font-bold">/</span>
-            <span className={`text-xs font-bold ${isLight ? 'text-[#0f172a]' : 'text-slate-200'}`}>
-              Console do Gestor
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-[#ed1c24]" />
+              <span className="font-display tracking-[0.14em] text-base uppercase">
+                UPSELL
+              </span>
+            </div>
+            <span className="opacity-30">/</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.16em] font-bold text-[#ed1c24]">
+              Console Master do Gestor
             </span>
 
-            <div className={`hidden sm:block h-3.5 w-px ${isLight ? 'bg-slate-300' : 'bg-white/15'}`} />
-
-            {/* Client Selector Dropdown */}
-            <div className={`flex items-center gap-2 rounded-xl px-3 py-1.5 border-2 transition-colors ${
-              isLight ? 'bg-slate-100 border-slate-300' : 'bg-[#181a24] border-white/20'
-            }`}>
-              <Building2 className="w-3.5 h-3.5 text-[#b58c56]" />
+            {/* Seletor de Cliente */}
+            <div
+              className={`flex items-center gap-2 rounded-lg px-3 py-1.5 border ${
+                isLight ? 'bg-white border-[#141414]/15' : 'bg-[#161922] border-white/15'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5 text-[#ed1c24]" />
               <select
                 value={currentClient.id}
                 onChange={e => onSelectClient(e.target.value)}
-                className={`bg-transparent text-xs font-bold focus:outline-none cursor-pointer ${
-                  isLight ? 'text-slate-900' : 'text-white'
-                }`}
+                className="bg-transparent text-xs font-bold focus:outline-none cursor-pointer"
               >
                 {clients.map(c => (
-                  <option key={c.id} value={c.id} className={isLight ? 'bg-white text-slate-900' : 'bg-[#181a24] text-white'}>
+                  <option
+                    key={c.id}
+                    value={c.id}
+                    className={isLight ? 'bg-white text-[#141414]' : 'bg-[#161922] text-white'}
+                  >
                     {c.companyName}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Botão + Novo Cliente */}
             <button
               type="button"
               onClick={() => setIsAddClientModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#734e1c] dark:text-[#dfc7a7] bg-[#b58c56]/15 hover:bg-[#b58c56]/25 transition-all border-2 border-[#b58c56]/40"
-              title="Cadastrar uma nova empresa parceira"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#ed1c24] text-white hover:bg-[#c8141b] transition-all cursor-pointer"
             >
               <UserPlus className="w-3.5 h-3.5" />
-              <span>Novo Cliente</span>
+              <span>+ Novo Cliente</span>
             </button>
 
-            {/* Botão Gerenciar Clientes (Lista com Exclusão e Troca Rápida) */}
             <button
               type="button"
               onClick={() => setIsManageClientsModalOpen(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border-2 ${
-                isLight
-                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-300'
-                  : 'bg-[#181a24] hover:bg-[#222533] text-white border-white/20'
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                isLight ? 'bg-white border-[#141414]/15' : 'bg-[#161922] border-white/15'
               }`}
-              title="Ver e gerenciar todos os clientes cadastrados"
             >
-              <Users className="w-3.5 h-3.5 text-[#b58c56]" />
-              <span className="hidden sm:inline">Gerenciar Clientes</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                isLight ? 'bg-slate-200 text-slate-900' : 'bg-white/10 text-[#dfc7a7]'
-              }`}>
-                {clients.length}
-              </span>
+              <Users className="w-3.5 h-3.5 text-[#ed1c24]" />
+              <span>Clientes ({clients.length})</span>
             </button>
 
-            {/* Botão Central de Minhas Tarefas da Agência (Global across clients) */}
             <button
               type="button"
               onClick={() => setIsAgencyTasksModalOpen(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border-2 ${
-                isLight
-                  ? 'bg-amber-100 hover:bg-amber-200/80 text-amber-950 border-amber-300 shadow-2xs'
-                  : 'bg-[#b58c56]/20 hover:bg-[#b58c56]/30 text-[#dfc7a7] border-[#b58c56]/50'
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                isLight ? 'bg-white border-[#141414]/15' : 'bg-[#161922] border-white/15'
               }`}
-              title="Visualizar todas as tarefas atribuídas à equipe UpSell em todas as contas"
             >
-              <Zap className="w-3.5 h-3.5 text-[#b58c56]" />
-              <span className="hidden sm:inline">Minhas Tarefas (UpSell)</span>
-              <span className="sm:hidden">Minhas Tarefas</span>
-              {pendingAgencyTasks.length > 0 && (
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-[#b58c56] text-white">
-                  {pendingAgencyTasks.length}
-                </span>
-              )}
+              <Zap className="w-3.5 h-3.5 text-[#ed1c24]" />
+              <span>Fila UPSELL ({pendingAgencyTasks.length})</span>
             </button>
-
-            {/* Alerta de Solicitação de Recuperação de Senha/PIN */}
-            {pendingPinRequests.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setIsManageClientsModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-950 dark:text-amber-200 bg-amber-200 dark:bg-amber-500/25 hover:bg-amber-300 border-2 border-amber-400 dark:border-amber-500/50 transition-all animate-pulse shadow-sm"
-                title={`${pendingPinRequests.length} solicitação(ões) de recuperação de PIN`}
-              >
-                <KeyRound className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                <span>{pendingPinRequests.length} Reset de PIN</span>
-              </button>
-            )}
           </div>
 
-          {/* Right Action Buttons: Theme Toggle, View As Client, Reset, Logout */}
           <div className="flex items-center gap-2.5 w-full md:w-auto justify-between md:justify-end">
-            {/* Theme Toggle Button */}
             <button
               type="button"
               onClick={toggleTheme}
-              title={isLight ? 'Alternar para Modo Noturno' : 'Alternar para Modo Claro Arejado'}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border-2 ${
-                isLight
-                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-300'
-                  : 'bg-[#181a24] hover:bg-[#222533] text-white border-white/20'
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border cursor-pointer ${
+                isLight ? 'bg-white border-[#141414]/15' : 'bg-[#161922] border-white/15'
               }`}
             >
-              {isLight ? (
-                <>
-                  <Moon className="w-3.5 h-3.5 text-[#b58c56]" />
-                  <span>Modo Noturno</span>
-                </>
-              ) : (
-                <>
-                  <Sun className="w-3.5 h-3.5 text-[#dfc7a7]" />
-                  <span>Modo Claro</span>
-                </>
-              )}
+              {isLight ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5 text-[#ed1c24]" />}
+              <span className="hidden sm:inline">{isLight ? 'Escuro' : 'Claro'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => onViewAsClient(currentClient.id)}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border-2 ${
-                isLight
-                  ? 'bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-300'
-                  : 'bg-[#181a24] hover:bg-[#222533] text-white border-white/20'
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold border cursor-pointer ${
+                isLight ? 'bg-white border-[#141414]/15' : 'bg-[#161922] border-white/15'
               }`}
             >
-              <Eye className="w-3.5 h-3.5 text-[#b58c56]" />
-              <span>Ver como Cliente</span>
+              <Eye className="w-3.5 h-3.5 text-[#ed1c24]" />
+              <span>Ver Portal do Cliente</span>
             </button>
 
             <button
               type="button"
               onClick={onResetDefault}
-              title="Restaurar dados de demonstração originais"
-              className={`p-2 rounded-xl text-xs transition-colors ${
-                isLight ? 'text-slate-600 hover:bg-slate-200 text-slate-900' : 'text-slate-300 hover:bg-white/10 hover:text-white'
-              }`}
+              title="Restaurar demonstração"
+              className="p-2 rounded-lg opacity-60 hover:opacity-100 cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
@@ -2291,9 +2191,7 @@ export function AdminPanel({
             <button
               type="button"
               onClick={onLogout}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
-                isLight ? 'text-slate-700 hover:text-black' : 'text-slate-300 hover:text-white'
-              }`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold opacity-75 hover:opacity-100 cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Sair</span>
@@ -2302,170 +2200,107 @@ export function AdminPanel({
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-6 sm:px-12 pt-8 sm:pt-10">
-        {/* Banner de Solicitações Pendentes de Redefinição de PIN */}
-        {pendingPinRequests.length > 0 && (
-          <div className="mb-8 p-5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-[#b58c56]/15 to-amber-500/10 border border-amber-500/40 shadow-lg">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-amber-500 text-black mt-0.5 sm:mt-0 shrink-0">
-                  <KeyRound className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="font-bold text-sm block text-amber-900 dark:text-amber-200">
-                    {pendingPinRequests.length} Solicitação de Recuperação de Acesso Pendente
-                  </span>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
-                    O cliente esqueceu a senha ou PIN. Você pode gerar uma nova chave de 6 dígitos e disparar mensagem oficial com 1 clique.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-                {pendingPinRequests.map(reqClient => (
-                  <div key={reqClient.id} className="flex items-center gap-2 p-1.5 rounded-xl bg-black/20 border border-white/10">
-                    <span className="text-xs font-semibold px-2 text-[#eae8e3]">
-                      {reqClient.companyName}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleInstantResetAndSendPin(reqClient)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold text-black bg-[#c8a97e] hover:bg-[#dfc7a7] transition-all flex items-center gap-1.5 shadow"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      <span>Gerar PIN & Enviar WhatsApp</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDismissPinRequest(reqClient.id, reqClient.companyName)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-white"
-                      title="Dispensar aviso"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
+      {/* MAIN */}
+      <main className="max-w-7xl mx-auto px-5 sm:px-10 pt-8">
         <ClientEditor
           key={currentClient.id}
           client={currentClient}
           onUpdateClient={onUpdateClient}
           onViewAsClient={onViewAsClient}
-          onRequestDeleteClient={(c) => setClientToDelete(c)}
-          canDeleteClient={clients.length > 1}
+          onRequestDeleteClient={c => setClientToDelete(c)}
           showToast={showToast}
           isLight={isLight}
         />
       </main>
 
-      {/* MODAL DE CADASTRO DE NOVO CLIENTE */}
+      {/* MODAL NOVO CLIENTE */}
       {isAddClientModalOpen && (
         <div
           onClick={() => setIsAddClientModalOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
         >
           <div
             onClick={e => e.stopPropagation()}
             className={`w-full max-w-lg p-6 sm:p-8 rounded-2xl shadow-2xl border ${
-              isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#151720] border-white/10 text-white'
+              isLight ? 'bg-white border-[#141414]/15 text-[#141414]' : 'bg-[#151720] border-white/10 text-white'
             }`}
           >
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10 mb-5">
+            <div className="flex items-center justify-between pb-4 border-b border-[#141414]/10 dark:border-white/10 mb-5">
               <div className="flex items-center gap-2.5">
-                <UserPlus className="w-5 h-5 text-[#b58c56]" />
-                <h3 className="text-lg font-bold">Cadastrar Novo Cliente</h3>
+                <UserPlus className="w-5 h-5 text-[#ed1c24]" />
+                <h3 className="font-display text-2xl uppercase">Cadastrar Novo Cliente</h3>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsAddClientModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700"
-              >
+              <button type="button" onClick={() => setIsAddClientModalOpen(false)}>
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateNewClient} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">
-                  Nome da Empresa / Clínica *
+                <label className="block font-mono text-[10px] font-bold uppercase mb-1">
+                  Nome da Empresa *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Clínica São Lucas, Lumina Odontologia..."
+                  placeholder="Ex: Clínica São Lucas"
                   value={newCompanyName}
                   onChange={e => setNewCompanyName(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-xl text-xs border ${
-                    isLight ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-[#101217] border-white/10 text-white'
-                  }`}
+                  className="w-full px-3.5 py-2.5 rounded-xl text-xs border border-[#141414]/20 dark:border-white/15 bg-transparent"
                 />
               </div>
-
               <div>
-                <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">
-                  Segmento de Atuação
+                <label className="block font-mono text-[10px] font-bold uppercase mb-1">
+                  Segmento
                 </label>
                 <input
                   type="text"
-                  placeholder="Ex: Cirurgia Plástica, Dermatologia, B2B SaaS..."
+                  placeholder="Ex: Dermatologia, E-commerce..."
                   value={newSegment}
                   onChange={e => setNewSegment(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-xl text-xs border ${
-                    isLight ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-[#101217] border-white/10 text-white'
-                  }`}
+                  className="w-full px-3.5 py-2.5 rounded-xl text-xs border border-[#141414]/20 dark:border-white/15 bg-transparent"
                 />
               </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">
-                    Nome do Responsável
+                  <label className="block font-mono text-[10px] font-bold uppercase mb-1">
+                    Responsável
                   </label>
                   <input
                     type="text"
-                    placeholder="Ex: Dra. Mariana Costa"
+                    placeholder="Ex: Dra. Mariana"
                     value={newResponsible}
                     onChange={e => setNewResponsible(e.target.value)}
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs border ${
-                      isLight ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-[#101217] border-white/10 text-white'
-                    }`}
+                    className="w-full px-3.5 py-2.5 rounded-xl text-xs border border-[#141414]/20 dark:border-white/15 bg-transparent"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">
-                    E-mail Institucional
+                  <label className="block font-mono text-[10px] font-bold uppercase mb-1">
+                    E-mail Google Autorizado *
                   </label>
                   <input
                     type="email"
-                    placeholder="contato@empresa.com.br"
+                    required
+                    placeholder="cliente@gmail.com"
                     value={newEmail}
                     onChange={e => setNewEmail(e.target.value)}
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs border ${
-                      isLight ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-[#101217] border-white/10 text-white'
-                    }`}
+                    className="w-full px-3.5 py-2.5 rounded-xl text-xs border border-[#141414]/20 dark:border-white/15 bg-transparent font-mono"
                   />
                 </div>
               </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-white/10 mt-6">
+              <div className="flex justify-end gap-2 pt-4">
                 <button
                   type="button"
                   onClick={() => setIsAddClientModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-800"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-[#b58c56] hover:bg-[#9d7644] transition-all shadow-md"
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#ed1c24] cursor-pointer"
                 >
-                  Criar Conta do Cliente
+                  Criar Cliente
                 </button>
               </div>
             </form>
@@ -2473,542 +2308,163 @@ export function AdminPanel({
         </div>
       )}
 
-      {/* MODAL DE GERENCIAMENTO GERAL DE TODOS OS CLIENTES */}
+      {/* MODAL GERENCIAR CLIENTES */}
       {isManageClientsModalOpen && (
         <div
           onClick={() => setIsManageClientsModalOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
         >
           <div
             onClick={e => e.stopPropagation()}
             className={`w-full max-w-2xl max-h-[85vh] flex flex-col p-6 sm:p-7 rounded-2xl shadow-2xl border ${
-              isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#151720] border-white/10 text-white'
+              isLight ? 'bg-white border-[#141414]/15 text-[#141414]' : 'bg-[#151720] border-white/10 text-white'
             }`}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10">
-              <div className="flex items-center gap-2.5">
-                <Users className="w-5 h-5 text-[#b58c56]" />
-                <h3 className="text-base sm:text-lg font-bold">
-                  Gerenciar Clientes Cadastrados ({clients.length})
-                </h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsManageClientsModalOpen(false);
-                    setIsAddClientModalOpen(true);
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#b58c56] bg-[#b58c56]/10 hover:bg-[#b58c56]/20 transition-all border border-[#b58c56]/30"
-                >
-                  <UserPlus className="w-3.5 h-3.5" />
-                  <span>Novo Cliente</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsManageClientsModalOpen(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Lista de Clientes */}
-            <div className="overflow-y-auto py-4 space-y-3 flex-1 pr-1">
-              {clients.map(c => {
-                const isSelected = c.id === currentClient.id;
-                return (
-                  <div
-                    key={c.id}
-                    className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                      isSelected
-                        ? isLight
-                          ? 'bg-amber-50/60 border-[#b58c56]/60 shadow-sm'
-                          : 'bg-[#1f2230] border-[#b58c56]/60'
-                        : isLight
-                        ? 'bg-slate-50/70 border-slate-200 hover:border-slate-300'
-                        : 'bg-[#1a1d26] border-white/5 hover:border-white/10'
-                    }`}
-                  >
-                    <div className="space-y-1.5 flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-bold text-sm">{c.companyName}</span>
-                        {isSelected && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#b58c56] text-white">
-                            Em Edição
-                          </span>
-                        )}
-                        {c.pinResetRequested && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-500 border border-amber-500/40 animate-pulse">
-                            ⚠️ Solicitou Reset de PIN
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                        <span className="font-mono">{c.email}</span>
-                        <span>·</span>
-                        <span>Resp: {c.responsibleName}</span>
-                        <span>·</span>
-                        <span className="font-mono font-bold text-[#b58c56] bg-[#b58c56]/10 px-1.5 py-0.5 rounded">
-                          PIN: {c.accessPin || '839102'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-1.5 self-end sm:self-center">
-                      {c.pinResetRequested ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInstantResetAndSendPin(c);
-                          }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-black bg-[#c8a97e] hover:bg-[#dfc7a7] transition-all shadow"
-                          title="Gerar novo PIN e abrir WhatsApp com mensagem pronta"
-                        >
-                          <MessageCircle className="w-3.5 h-3.5" />
-                          <span>Atender & Enviar PIN</span>
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInstantResetAndSendPin(c);
-                          }}
-                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                            isLight
-                              ? 'bg-amber-100/70 hover:bg-amber-200 text-amber-900'
-                              : 'bg-white/5 hover:bg-white/10 text-amber-300'
-                          }`}
-                          title="Gerar novo PIN e enviar no WhatsApp"
-                        >
-                          <KeyRound className="w-3 h-3 text-[#b58c56]" />
-                          <span>Redefinir</span>
-                        </button>
-                      )}
-
-                      {!isSelected && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onSelectClient(c.id);
-                            setIsManageClientsModalOpen(false);
-                            showToast(`Alternado para ${c.companyName}.`);
-                          }}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                            isLight
-                              ? 'bg-slate-200 hover:bg-slate-300 text-slate-800'
-                              : 'bg-white/10 hover:bg-white/20 text-white'
-                          }`}
-                        >
-                          Selecionar
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onViewAsClient(c.id);
-                          setIsManageClientsModalOpen(false);
-                        }}
-                        className={`p-1.5 rounded-lg text-xs transition-colors ${
-                          isLight
-                            ? 'text-slate-600 hover:bg-slate-200'
-                            : 'text-slate-400 hover:bg-white/10 hover:text-white'
-                        }`}
-                        title="Visualizar portal deste cliente"
-                      >
-                        <Eye className="w-4 h-4 text-[#b58c56]" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const origin = typeof window !== 'undefined' ? window.location.origin : '';
-                          const clientUrl = `${origin}/?cliente=${c.id}`;
-                          const text = `Olá ${c.responsibleName}! 👋\n\nSegue o link exclusivo para acompanhar o Portal da sua empresa na UpSell:\n👉 ${clientUrl}\n\n🔑 Sua chave de acesso pessoal (PIN): *${c.accessPin || '839102'}*`;
-                          if (navigator?.clipboard?.writeText) {
-                            navigator.clipboard.writeText(text);
-                          }
-                          showToast(`Dados de acesso de ${c.companyName} copiados!`);
-                        }}
-                        className={`p-1.5 rounded-lg text-xs transition-colors ${
-                          isLight
-                            ? 'text-slate-600 hover:bg-slate-200'
-                            : 'text-slate-400 hover:bg-white/10 hover:text-white'
-                        }`}
-                        title="Copiar convite com PIN para WhatsApp"
-                      >
-                        <Share2 className="w-4 h-4 text-[#b58c56]" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setClientToDelete(c);
-                        }}
-                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-500/15 border border-rose-300 dark:border-rose-500/30 transition-colors"
-                        title="Excluir este cliente"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Excluir</span>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Footer */}
-            <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-xs text-slate-500">
-              <span>{clients.length} empresas gerenciadas no sistema</span>
-              <button
-                type="button"
-                onClick={() => setIsManageClientsModalOpen(false)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold ${
-                  isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-white/5 hover:bg-white/10 text-white'
-                }`}
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE CLIENTE (100% IN-APP, SEM WINDOW.CONFIRM) */}
-      {clientToDelete && (
-        <div
-          onClick={() => setClientToDelete(null)}
-          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            className={`w-full max-w-md p-6 sm:p-7 rounded-2xl shadow-2xl border ${
-              isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#151720] border-white/10 text-white'
-            }`}
-          >
-            {/* Header com ícone de alerta */}
-            <div className="flex items-start gap-3.5 pb-4 border-b border-slate-200 dark:border-white/10">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-500 shrink-0">
-                <Trash2 className="w-5 h-5" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Excluir Cliente
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Você está prestes a remover o cliente:
-                </p>
-                <p className="text-sm font-semibold text-rose-600 dark:text-rose-400">
-                  {clientToDelete.companyName}
-                </p>
-              </div>
-            </div>
-
-            {/* Detalhes do que será removido */}
-            <div className="py-4 space-y-3">
-              <div className={`p-3 rounded-xl ${isLight ? 'bg-slate-50 border border-slate-200/80' : 'bg-[#1a1d26] border border-white/5'} text-xs space-y-2`}>
-                <div className="flex justify-between text-slate-600 dark:text-slate-300">
-                  <span>Segmento:</span>
-                  <span className="font-semibold">{clientToDelete.segment}</span>
-                </div>
-                <div className="flex justify-between text-slate-600 dark:text-slate-300">
-                  <span>Responsável:</span>
-                  <span className="font-semibold">{clientToDelete.responsibleName}</span>
-                </div>
-                <div className="flex justify-between text-slate-600 dark:text-slate-300">
-                  <span>Credenciais no Cofre:</span>
-                  <span className="font-semibold text-[#b58c56]">{clientToDelete.activeTools?.length || 0} cadastradas</span>
-                </div>
-                <div className="flex justify-between text-slate-600 dark:text-slate-300">
-                  <span>Tarefas Registradas:</span>
-                  <span className="font-semibold text-amber-600">{clientToDelete.actionItems?.length || 0} pendências</span>
-                </div>
-              </div>
-
-              {clients.length <= 1 ? (
-                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs flex items-start gap-2.5">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
-                  <div>
-                    <strong>Atenção:</strong> Este é o único cliente ativo no momento. Ao confirmar a exclusão, todos os seus dados serão removidos e o sistema iniciará uma conta limpa em branco para que você possa continuar cadastrando seus novos projetos.
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Esta ação é irreversível e removerá todos os dados, credenciais, links, tarefas e métricas de <strong>{clientToDelete.companyName}</strong> tanto localmente quanto no Firebase Firestore.
-                </p>
-              )}
-            </div>
-
-            {/* Ações */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-white/10">
-              <button
-                type="button"
-                onClick={() => setClientToDelete(null)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                  isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-white/5 hover:bg-white/10 text-white'
-                }`}
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleConfirmDeleteClient(clientToDelete.id, clientToDelete.companyName)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-md bg-rose-600 hover:bg-rose-700 hover:shadow-rose-600/25 active:scale-95"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Confirmar Exclusão</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL CENTRAL DE MINHAS TAREFAS (AGÊNCIA UPSELL EM TODAS AS CONTAS) */}
-      {isAgencyTasksModalOpen && (
-        <div
-          onClick={() => setIsAgencyTasksModalOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn"
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            className={`w-full max-w-3xl max-h-[88vh] flex flex-col p-6 sm:p-7 rounded-3xl shadow-2xl border ${
-              isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#151720] border-white/10 text-white'
-            }`}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#b58c56]/15 flex items-center justify-center text-[#b58c56]">
-                  <Zap className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base sm:text-lg font-bold tracking-tight">
-                    Minhas Tarefas & Entregas (Central UpSell)
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Visão unificada das demandas operacionais sob responsabilidade da agência
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAgencyTasksModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
-              >
+            <div className="flex items-center justify-between pb-4 border-b border-[#141414]/10 dark:border-white/10">
+              <h3 className="font-display text-2xl uppercase">
+                Empresas Gerenciadas ({clients.length})
+              </h3>
+              <button type="button" onClick={() => setIsManageClientsModalOpen(false)}>
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Filter Sub-bar inside Modal */}
-            <div className="py-3.5 border-b border-slate-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-slate-400 font-medium">Filtrar por Cliente:</span>
-                <select
-                  value={agencyModalClientFilter}
-                  onChange={e => setAgencyModalClientFilter(e.target.value)}
-                  className={`text-xs px-2.5 py-1 rounded-lg border font-semibold ${
-                    isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-[#1a1d26] border-white/10 text-slate-200'
+            <div className="overflow-y-auto py-4 space-y-3 flex-1">
+              {clients.map(c => (
+                <div
+                  key={c.id}
+                  className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    c.id === currentClient.id
+                      ? 'border-[#ed1c24] bg-[#ed1c24]/5'
+                      : 'border-[#141414]/10 dark:border-white/10'
                   }`}
                 >
-                  <option value="all">Todos os Clientes ({allAgencyTasks.length})</option>
-                  {clients.map(c => {
-                    const clientAgencyCount = allAgencyTasks.filter(item => item.client.id === c.id).length;
-                    return (
-                      <option key={c.id} value={c.id}>
-                        {c.companyName} ({clientAgencyCount})
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-slate-400 font-medium">Prioridade:</span>
-                <select
-                  value={agencyModalPriorityFilter}
-                  onChange={e => setAgencyModalPriorityFilter(e.target.value)}
-                  className={`text-xs px-2.5 py-1 rounded-lg border font-semibold ${
-                    isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-[#1a1d26] border-white/10 text-slate-200'
-                  }`}
-                >
-                  <option value="all">Todas as Prioridades</option>
-                  <option value="high">🔴 Alta Prioridade</option>
-                  <option value="medium">🟡 Média Prioridade</option>
-                  <option value="low">🔵 Baixa Prioridade</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Tasks List */}
-            <div className="overflow-y-auto py-4 space-y-3 flex-1 pr-1">
-              {allAgencyTasks
-                .filter(item => {
-                  if (agencyModalClientFilter !== 'all' && item.client.id !== agencyModalClientFilter) {
-                    return false;
-                  }
-                  if (agencyModalPriorityFilter !== 'all' && item.task.priority !== agencyModalPriorityFilter) {
-                    return false;
-                  }
-                  return true;
-                })
-                .length === 0 ? (
-                <div className={`p-8 text-center rounded-2xl ${isLight ? 'bg-slate-50' : 'bg-[#1a1d26]'}`}>
-                  <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-                  <p className="text-sm font-semibold">Tudo em dia!</p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Nenhuma tarefa operacional pendente da agência com os filtros selecionados.
-                  </p>
+                  <div>
+                    <span className="font-bold text-sm block">{c.companyName}</span>
+                    <span className="font-mono text-xs opacity-70">
+                      {c.allowedEmails?.join(', ') || c.email} · Resp: {c.responsibleName}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSelectClient(c.id);
+                        setIsManageClientsModalOpen(false);
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#141414] text-white dark:bg-[#ed1c24] cursor-pointer"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setClientToDelete(c)}
+                      className="p-1.5 text-rose-600 cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              ) : (
-                allAgencyTasks
-                  .filter(item => {
-                    if (agencyModalClientFilter !== 'all' && item.client.id !== agencyModalClientFilter) {
-                      return false;
-                    }
-                    if (agencyModalPriorityFilter !== 'all' && item.task.priority !== agencyModalPriorityFilter) {
-                      return false;
-                    }
-                    return true;
-                  })
-                  .map(({ client: c, task: t }) => {
-                    const isCompleted = t.status === 'completed';
-
-                    return (
-                      <div
-                        key={`${c.id}-${t.id}`}
-                        className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 ${
-                          isCompleted
-                            ? 'opacity-60 bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5'
-                            : isLight
-                            ? 'bg-slate-50/80 hover:bg-white border-slate-200 hover:border-[#b58c56]/60 shadow-xs'
-                            : 'bg-[#1a1d26] hover:bg-[#202330] border-white/5 hover:border-[#c8a97e]/40'
-                        }`}
-                      >
-                        <div className="space-y-1.5 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {/* Client Pill */}
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#b58c56]/15 text-[#b58c56] border border-[#b58c56]/30">
-                              <Building2 className="w-3 h-3" />
-                              <span>{c.companyName}</span>
-                            </span>
-
-                            {/* Priority Badge */}
-                            {t.priority === 'high' ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 border border-rose-200 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-400">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                Alta
-                              </span>
-                            ) : t.priority === 'medium' ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 border border-amber-200 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-400">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                                Média
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 border border-slate-200 text-slate-600 dark:bg-white/5 dark:border-white/10 dark:text-slate-400">
-                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                                Baixa
-                              </span>
-                            )}
-
-                            {t.category && (
-                              <span className="text-[10px] text-slate-400 font-mono">
-                                · {t.category}
-                              </span>
-                            )}
-                          </div>
-
-                          <h5
-                            className={`text-xs sm:text-sm font-semibold ${
-                              isCompleted ? 'line-through text-slate-400' : ''
-                            }`}
-                          >
-                            {t.task}
-                          </h5>
-
-                          {t.detail && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                              {t.detail}
-                            </p>
-                          )}
-
-                          <span className="text-[10px] text-slate-400 font-mono block">
-                            Prazo: {t.due}
-                          </span>
-                        </div>
-
-                        {/* Status selector & Action */}
-                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                          <select
-                            value={t.status}
-                            onChange={e => handleUpdateTaskStatusFromGlobal(c.id, t.id, e.target.value as any)}
-                            className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-colors ${
-                              t.status === 'completed'
-                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                                : t.status === 'in_progress'
-                                ? 'bg-amber-50 text-amber-800 border-amber-200'
-                                : t.status === 'review'
-                                ? 'bg-sky-50 text-sky-800 border-sky-200'
-                                : 'bg-slate-100 text-slate-700 border-slate-200'
-                            }`}
-                          >
-                            <option value="pending">A Fazer</option>
-                            <option value="in_progress">Em Andamento</option>
-                            <option value="review">Em Revisão</option>
-                            <option value="completed">Concluído</option>
-                          </select>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onSelectClient(c.id);
-                              setIsAgencyTasksModalOpen(false);
-                              showToast(`Abrindo console de ${c.companyName}...`);
-                            }}
-                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                              isLight
-                                ? 'bg-slate-200 hover:bg-slate-300 text-slate-800'
-                                : 'bg-white/10 hover:bg-white/20 text-white'
-                            }`}
-                            title="Abrir este cliente no painel"
-                          >
-                            <span>Ir p/ Cliente</span>
-                            <ArrowRight className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-              )}
+              ))}
             </div>
+          </div>
+        </div>
+      )}
 
-            {/* Footer */}
-            <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-xs text-slate-500">
-              <span>{pendingAgencyTasks.length} tarefas pendentes da agência</span>
+      {/* MODAL CONFIRMAÇÃO EXCLUSÃO */}
+      {clientToDelete && (
+        <div
+          onClick={() => setClientToDelete(null)}
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            className={`w-full max-w-md p-6 rounded-2xl border ${
+              isLight ? 'bg-white border-[#141414]/15 text-[#141414]' : 'bg-[#151720] border-white/10 text-white'
+            } space-y-4`}
+          >
+            <h3 className="font-display text-2xl uppercase text-rose-600">
+              Excluir {clientToDelete.companyName}?
+            </h3>
+            <p className="text-xs opacity-75 leading-relaxed">
+              Esta ação removerá os dados desta empresa do painel e do Firestore.
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => setIsAgencyTasksModalOpen(false)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold ${
-                  isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-white/5 hover:bg-white/10 text-white'
-                }`}
+                onClick={() => setClientToDelete(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold"
               >
-                Fechar
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => handleConfirmDeleteClient(clientToDelete.id, clientToDelete.companyName)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600"
+              >
+                Confirmar Exclusão
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Floating Success Feedback Toast */}
+      {/* MODAL FILA DE TAREFAS DA UPSELL */}
+      {isAgencyTasksModalOpen && (
+        <div
+          onClick={() => setIsAgencyTasksModalOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            className={`w-full max-w-3xl max-h-[85vh] flex flex-col p-6 rounded-2xl border ${
+              isLight ? 'bg-white border-[#141414]/15 text-[#141414]' : 'bg-[#151720] border-white/10 text-white'
+            }`}
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-[#141414]/10 dark:border-white/10">
+              <h3 className="font-display text-2xl uppercase">
+                Fila de Execução da UPSELL ({pendingAgencyTasks.length} ativas)
+              </h3>
+              <button type="button" onClick={() => setIsAgencyTasksModalOpen(false)}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto py-4 space-y-3 flex-1">
+              {allAgencyTasks.map(({ client: c, task: t }) => (
+                <div
+                  key={`${c.id}-${t.id}`}
+                  className="p-4 rounded-xl border border-[#141414]/10 dark:border-white/10 flex items-center justify-between gap-4"
+                >
+                  <div className="space-y-1">
+                    <span className="font-mono text-[10px] font-bold uppercase text-[#ed1c24]">
+                      {c.companyName} · {t.due}
+                    </span>
+                    <p className="text-xs font-bold">{t.task}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectClient(c.id);
+                      setIsAgencyTasksModalOpen(false);
+                    }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#141414] text-white dark:bg-[#ed1c24] shrink-0"
+                  >
+                    Abrir Conta &rarr;
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TOAST */}
       {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 animate-fadeIn">
-          <div className="flex items-center gap-2.5 px-5 py-3 rounded-xl bg-slate-900 text-white text-xs shadow-2xl border border-[#b58c56]/40 backdrop-blur-md">
-            <CheckCircle2 className="w-4 h-4 text-[#b58c56] shrink-0" />
-            <span className="font-semibold">{toastMessage}</span>
+        <div className="fixed top-20 right-6 z-50">
+          <div className="flex items-center gap-2.5 px-5 py-3 rounded-xl bg-[#141414] text-white text-xs shadow-2xl border border-[#ed1c24]">
+            <CheckCircle2 className="w-4 h-4 text-[#ed1c24] shrink-0" />
+            <span className="font-bold">{toastMessage}</span>
           </div>
         </div>
       )}

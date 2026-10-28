@@ -139,17 +139,19 @@ function initFirestoreSync() {
         photoURL: user.photoURL
       };
 
-      // Se o e-mail for do gestor ou administrador, atribui role de admin
-      const isAdminEmail = user.email === 'felipemassonp@gmail.com' || user.email?.includes('upsell');
+      // Se o e-mail for do gestor master, atribui role de admin
+      const isAdminEmail = user.email?.toLowerCase().trim() === 'felipemassonp@gmail.com';
       const newRole: UserRole = isAdminEmail ? 'admin' : 'client';
       let targetClientId = currentState.activeClientId;
 
-      // Se for cliente, vincula automaticamente ao perfil correspondente pelo e-mail
+      // Se for cliente, vincula automaticamente ao perfil correspondente pelo e-mail ou lista de allowedEmails
       if (!isAdminEmail && user.email) {
         const cleanUserEmail = user.email.toLowerCase().trim();
-        const matched = currentState.clients.find(
-          c => c.email?.toLowerCase().trim() === cleanUserEmail
-        );
+        const matched = currentState.clients.find(c => {
+          const primary = c.email?.toLowerCase().trim();
+          const allowed = c.allowedEmails?.map(e => e.toLowerCase().trim()) || [];
+          return primary === cleanUserEmail || allowed.includes(cleanUserEmail);
+        });
         if (matched) {
           targetClientId = matched.id;
         }
