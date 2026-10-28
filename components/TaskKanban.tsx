@@ -302,20 +302,20 @@ export function TaskKanban({
 
   // Theme helper classes - Alto contraste rigoroso (Linear / Suíço)
   const cardBg = isLight
-    ? 'bg-white border-2 border-slate-300 shadow-[0_4px_20px_rgba(15,23,42,0.06)] text-slate-950'
-    : 'bg-[#12141a] border border-white/15 shadow-xl text-white';
+    ? 'bg-white border border-[#141414]/12 shadow-[0_12px_32px_-18px_rgba(20,20,20,0.06)] text-[#141414]'
+    : 'bg-[#12141a] border border-white/10 shadow-xl text-white';
 
   const innerBg = isLight
-    ? 'bg-white border-2 border-slate-300 shadow-xs text-slate-950'
-    : 'bg-[#181b24] border border-white/12 text-slate-100';
+    ? 'bg-[#f7f7f4] border border-[#141414]/12 text-[#141414]'
+    : 'bg-[#181b24] border border-white/10 text-slate-100';
 
   const inputClass = isLight
-    ? 'w-full px-3.5 py-2.5 bg-white border-2 border-slate-400 rounded-xl text-xs text-slate-950 placeholder-slate-500 focus:outline-none focus:border-[#8c5e28] focus:ring-2 focus:ring-[#8c5e28]/20 transition-all font-semibold shadow-xs'
-    : 'w-full px-3.5 py-2.5 bg-[#0e1016] border border-white/20 rounded-xl text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#c8a97e] transition-colors font-semibold';
+    ? 'w-full px-3.5 py-2.5 bg-white border border-[#141414]/20 rounded-xl text-xs text-[#141414] placeholder-[#141414]/45 focus:outline-none focus:border-[#141414] transition-all font-semibold'
+    : 'w-full px-3.5 py-2.5 bg-[#0c0d10] border border-white/20 rounded-xl text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#ed1c24] transition-colors font-semibold';
 
   const labelClass = isLight
-    ? 'block text-xs font-bold uppercase tracking-wider text-slate-900 mb-1.5'
-    : 'block text-[11px] font-bold uppercase tracking-wider text-slate-200 mb-1.5';
+    ? 'block font-mono text-[10px] font-bold uppercase tracking-wider text-[#141414]/80 mb-1.5'
+    : 'block font-mono text-[10px] font-bold uppercase tracking-wider text-slate-200 mb-1.5';
 
   const getStatusLateralBorder = (status: TaskStatus) => {
     switch (status) {
@@ -363,15 +363,15 @@ export function TaskKanban({
   const renderAssigneeBadge = (assignee?: TaskAssignee) => {
     if (assignee === 'agency') {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-black bg-amber-100 text-amber-950 border-2 border-amber-300 dark:bg-[#b58c56]/20 dark:text-[#dfc7a7] dark:border-[#b58c56]/50">
-          <Zap className="w-3 h-3 text-[#8c5e28] dark:text-[#dfc7a7]" />
-          <span>{isAdmin ? 'Minha Tarefa (UpSell)' : 'Equipe UpSell'}</span>
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md font-mono text-[10px] font-bold bg-[#141414] text-white dark:bg-white/15 dark:text-white">
+          <Zap className="w-3 h-3 text-[#ed1c24]" />
+          <span>{isAdmin ? 'UPSELL (Agência)' : 'Equipe UPSELL'}</span>
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-black bg-indigo-100 border-2 border-indigo-300 text-indigo-950 dark:bg-indigo-950/70 dark:border-indigo-400/50 dark:text-indigo-200">
-        <User className="w-3 h-3 text-indigo-700 dark:text-indigo-400" />
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md font-mono text-[10px] font-bold bg-[#ed1c24]/15 border border-[#ed1c24]/30 text-[#ed1c24]">
+        <User className="w-3 h-3 text-[#ed1c24]" />
         <span>{isAdmin ? 'Pendente do Cliente' : 'Sua Ação (Cliente)'}</span>
       </span>
     );
@@ -385,7 +385,7 @@ export function TaskKanban({
           <div>
             <div className="flex items-center gap-2.5">
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center border-2 ${
-                isLight ? 'bg-amber-100 text-[#8c5e28] border-amber-300' : 'bg-[#b58c56]/15 text-[#b58c56] border-transparent'
+                isLight ? 'bg-amber-100 text-[#ed1c24] border-amber-300' : 'bg-[#ed1c24]/15 text-[#ed1c24] border-transparent'
               }`}>
                 <LayoutGrid className="w-4 h-4" />
               </div>
@@ -412,7 +412,7 @@ export function TaskKanban({
 
             {agencyTasksCount > 0 && (
               <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border-2 flex items-center gap-1 ${
-                isLight ? 'bg-amber-100 text-amber-950 border-amber-300' : 'bg-[#b58c56]/15 text-[#dfc7a7] border-[#b58c56]/30'
+                isLight ? 'bg-amber-100 text-amber-950 border-amber-300' : 'bg-[#ed1c24]/15 text-[#dfc7a7] border-[#ed1c24]/30'
               }`}>
                 <Zap className="w-3 h-3" />
                 <span>{isAdmin ? 'Minhas:' : 'UpSell:'} {agencyTasksCount}</span>
@@ -439,9 +439,7 @@ export function TaskKanban({
               <button
                 type="button"
                 onClick={() => openCreateModal('pending')}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm ml-auto sm:ml-0 ${
-                  isLight ? 'bg-[#8c5e28] hover:bg-[#734b1c]' : 'bg-[#b58c56] hover:bg-[#9d7644]'
-                }`}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#ed1c24] hover:bg-[#c8141b] transition-all shadow-sm ml-auto sm:ml-0 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Nova Tarefa</span>
@@ -477,8 +475,8 @@ export function TaskKanban({
               className={`px-3 py-1 rounded-lg transition-all font-medium flex items-center gap-1 ${
                 assigneeFilter === 'agency'
                   ? isLight
-                    ? 'bg-[#b58c56] text-white font-semibold'
-                    : 'bg-[#b58c56] text-white font-semibold'
+                    ? 'bg-[#ed1c24] text-white font-semibold'
+                    : 'bg-[#ed1c24] text-white font-semibold'
                   : isLight
                   ? 'text-slate-600 hover:bg-slate-100'
                   : 'text-slate-400 hover:bg-white/5 hover:text-white'
@@ -534,7 +532,7 @@ export function TaskKanban({
                 placeholder="Buscar tarefa..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className={`pl-8 pr-3 py-1.5 rounded-lg text-xs w-36 sm:w-44 border-2 focus:outline-none focus:border-[#8c5e28] font-medium transition-colors ${
+                className={`pl-8 pr-3 py-1.5 rounded-lg text-xs w-36 sm:w-44 border-2 focus:outline-none focus:border-[#ed1c24] font-medium transition-colors ${
                   isLight
                     ? 'bg-white border-slate-300 text-slate-950 placeholder:text-slate-500'
                     : 'bg-[#1a1d26] border-white/10 text-white placeholder:text-slate-400'
@@ -612,7 +610,7 @@ export function TaskKanban({
                     <span className={`w-2 h-2 rounded-full ${col.color.dot}`} />
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <ColumnIcon className={`w-3.5 h-3.5 ${isLight ? 'text-[#8c5e28]' : 'text-[#b58c56]'}`} />
+                        <ColumnIcon className={`w-3.5 h-3.5 ${isLight ? 'text-[#ed1c24]' : 'text-[#ed1c24]'}`} />
                         <h4 className={`text-xs font-black tracking-tight ${isLight ? 'text-slate-950' : 'text-white'}`}>{col.title}</h4>
                       </div>
                       <span className={`text-[10px] block font-semibold ${isLight ? 'text-slate-700' : 'text-slate-400'}`}>{col.subtitle}</span>
@@ -631,7 +629,7 @@ export function TaskKanban({
                       <button
                         type="button"
                         onClick={() => openCreateModal(col.id)}
-                        className={`p-1 rounded transition-colors ${isLight ? 'text-slate-600 hover:text-[#8c5e28]' : 'text-slate-400 hover:text-[#b58c56]'}`}
+                        className={`p-1 rounded transition-colors ${isLight ? 'text-slate-600 hover:text-[#ed1c24]' : 'text-slate-400 hover:text-[#ed1c24]'}`}
                         title={`Adicionar tarefa em "${col.title}"`}
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -649,7 +647,7 @@ export function TaskKanban({
                         <button
                           type="button"
                           onClick={() => openCreateModal(col.id)}
-                          className={`mt-2 text-[10px] font-black hover:underline inline-flex items-center gap-1 ${isLight ? 'text-[#8c5e28]' : 'text-[#b58c56]'}`}
+                          className={`mt-2 text-[10px] font-black hover:underline inline-flex items-center gap-1 ${isLight ? 'text-[#ed1c24]' : 'text-[#ed1c24]'}`}
                         >
                           <Plus className="w-3 h-3" />
                           <span>Adicionar tarefa</span>
@@ -663,7 +661,7 @@ export function TaskKanban({
                       return (
                         <div
                           key={task.id}
-                          className={`p-3.5 rounded-xl ${innerBg} ${col.lateralBorder} transition-all space-y-2.5 hover:border-[#b58c56]/60 shadow-sm relative group`}
+                          className={`p-3.5 rounded-xl ${innerBg} ${col.lateralBorder} transition-all space-y-2.5 hover:border-[#ed1c24]/60 shadow-sm relative group`}
                         >
                           {/* Card Badges: Assignee, Priority & Tag */}
                           <div className="flex items-center justify-between gap-1 flex-wrap">
@@ -694,13 +692,13 @@ export function TaskKanban({
                           {/* Card Footer: Category tag & Due date */}
                           <div className="pt-2 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-2 text-[10px] text-slate-600 dark:text-slate-300">
                             {task.category && (
-                              <span className="flex items-center gap-1 truncate max-w-[120px] font-bold text-[#b58c56] dark:text-[#dfc7a7]">
+                              <span className="flex items-center gap-1 truncate max-w-[120px] font-bold text-[#ed1c24] dark:text-[#dfc7a7]">
                                 <Tag className="w-2.5 h-2.5" />
                                 <span className="truncate">{task.category}</span>
                               </span>
                             )}
                             <span className="flex items-center gap-1 shrink-0 font-mono font-semibold text-slate-700 dark:text-slate-200">
-                              <Calendar className="w-2.5 h-2.5 text-[#b58c56]" />
+                              <Calendar className="w-2.5 h-2.5 text-[#ed1c24]" />
                               <span>{task.due}</span>
                             </span>
                           </div>
@@ -724,7 +722,7 @@ export function TaskKanban({
                                 <button
                                   type="button"
                                   onClick={() => moveTaskColumn(task.id, 'next')}
-                                  className="p-1 rounded text-slate-400 hover:text-[#b58c56] hover:bg-[#b58c56]/10 transition-colors"
+                                  className="p-1 rounded text-slate-400 hover:text-[#ed1c24] hover:bg-[#ed1c24]/10 transition-colors"
                                   title="Avançar para próxima coluna"
                                 >
                                   <ArrowRight className="w-3 h-3" />
@@ -774,7 +772,7 @@ export function TaskKanban({
                                     <button
                                       type="button"
                                       onClick={() => openEditModal(task)}
-                                      className="text-slate-400 hover:text-[#b58c56] p-1 rounded transition-colors"
+                                      className="text-slate-400 hover:text-[#ed1c24] p-1 rounded transition-colors"
                                       title="Editar tarefa"
                                     >
                                       <Edit3 className="w-3 h-3" />
@@ -834,7 +832,7 @@ export function TaskKanban({
                           task.status === 'completed'
                             ? 'bg-emerald-600 text-white'
                             : isLight
-                            ? 'border border-slate-400 hover:border-[#b58c56]'
+                            ? 'border border-slate-400 hover:border-[#ed1c24]'
                             : 'border border-white/30 hover:border-[#c8a97e]'
                         }`}
                         title="Alternar conclusão"
@@ -900,7 +898,7 @@ export function TaskKanban({
                           <button
                             type="button"
                             onClick={() => openEditModal(task)}
-                            className="text-slate-400 hover:text-[#b58c56] p-1 rounded"
+                            className="text-slate-400 hover:text-[#ed1c24] p-1 rounded"
                             title="Editar"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
@@ -955,7 +953,7 @@ export function TaskKanban({
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-200/80 dark:border-white/10">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#b58c56]/15 flex items-center justify-center text-[#b58c56]">
+                <div className="w-8 h-8 rounded-xl bg-[#ed1c24]/15 flex items-center justify-center text-[#ed1c24]">
                   {editingTask ? <Edit3 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                 </div>
                 <div>
@@ -1003,7 +1001,7 @@ export function TaskKanban({
                     onClick={() => setFormAssignee('agency')}
                     className={`p-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                       formAssignee === 'agency'
-                        ? 'bg-[#b58c56] text-white border-[#b58c56] shadow-sm'
+                        ? 'bg-[#ed1c24] text-white border-[#ed1c24] shadow-sm'
                         : isLight
                         ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                         : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
@@ -1120,7 +1118,7 @@ export function TaskKanban({
 
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#b58c56] hover:bg-[#9d7644] transition-all shadow-md"
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#ed1c24] hover:bg-[#9d7644] transition-all shadow-md"
                 >
                   {editingTask ? 'Salvar Alterações' : 'Criar Tarefa no Kanban'}
                 </button>

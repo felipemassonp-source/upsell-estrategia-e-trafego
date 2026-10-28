@@ -102,8 +102,8 @@ Pela Contratada: Diretoria de Operações Upsell
             <div
               className={`p-2 rounded-xl border ${
                 isLight
-                  ? 'bg-amber-100/80 text-[#8c5e28] border-amber-300'
-                  : 'bg-[#b58c56]/15 text-[#b58c56] border-[#b58c56]/30'
+                  ? 'bg-[#ed1c24]/10 text-[#ed1c24] border-[#ed1c24]/25'
+                  : 'bg-[#ed1c24]/15 text-[#ed1c24] border-[#ed1c24]/30'
               }`}
             >
               <FileText className="w-5 h-5" />
@@ -156,9 +156,7 @@ Pela Contratada: Diretoria de Operações Upsell
             }`}
           >
             <h4
-              className={`text-xs font-bold uppercase tracking-wider ${
-                isLight ? 'text-[#8c5e28]' : 'text-[#dfc7a7]'
-              }`}
+              className="text-xs font-bold uppercase tracking-wider text-[#ed1c24]"
             >
               Partes Contratantes
             </h4>
@@ -294,7 +292,7 @@ Pela Contratada: Diretoria de Operações Upsell
             <button
               type="button"
               onClick={handleDownload}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#8c5e28] hover:bg-[#734b1c] text-white transition-colors shadow-md"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#ed1c24] hover:bg-[#c8141b] text-white transition-colors shadow-md cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Baixar Contrato</span>
