@@ -14,7 +14,7 @@ interface EditorialAuthModalProps {
 const ADMIN_EMAIL = 'felipemassonp@gmail.com';
 
 export function EditorialAuthModal({ isOpen, onClose, onLogin }: EditorialAuthModalProps) {
-  const { clients, selectClient, loginGoogle, logoutFirebase, authUser } = useUpsellStore();
+  const { clients, selectClient, loginGoogle, logoutAuth, authUser } = useUpsellStore();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccess, setAuthSuccess] = useState<string | null>(null);
@@ -184,7 +184,7 @@ export function EditorialAuthModal({ isOpen, onClose, onLogin }: EditorialAuthMo
                 </button>
                 <button
                   type="button"
-                  onClick={() => logoutFirebase()}
+                  onClick={() => logoutAuth()}
                   className="p-2 rounded-lg text-xs text-[#141414]/60 hover:text-[#141414] hover:bg-[#141414]/5 transition-colors cursor-pointer"
                   title="Trocar de conta Google"
                 >
