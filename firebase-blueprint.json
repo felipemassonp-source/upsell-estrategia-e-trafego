@@ -1,0 +1,138 @@
+{
+  "entities": {
+    "ClientProfile": {
+      "title": "ClientProfile",
+      "description": "Perfil de empresa cliente gerenciada na plataforma UpSell",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identificador único em slug do cliente"
+        },
+        "companyName": {
+          "type": "string",
+          "description": "Nome da empresa ou clínica"
+        },
+        "segment": {
+          "type": "string",
+          "description": "Nicho ou segmento de atuação"
+        },
+        "responsibleName": {
+          "type": "string",
+          "description": "Nome do contato principal ou médico/gestor"
+        },
+        "email": {
+          "type": "string",
+          "description": "E-mail de contato oficial"
+        },
+        "contractStatus": {
+          "type": "string",
+          "description": "Status de vigência do contrato"
+        },
+        "contractStart": {
+          "type": "string",
+          "description": "Data de início do contrato"
+        },
+        "contractRenewal": {
+          "type": "string",
+          "description": "Data de renovação do contrato"
+        },
+        "scope": {
+          "type": "array",
+          "description": "Lista de serviços contratados"
+        },
+        "activeChannels": {
+          "type": "array",
+          "description": "Canais ativos de tráfego e mídia"
+        },
+        "currentFocus": {
+          "type": "string",
+          "description": "Foco estratégico do mês"
+        },
+        "nextSteps": {
+          "type": "string",
+          "description": "Próximos passos operacionais"
+        },
+        "metrics": {
+          "type": "object",
+          "description": "Métricas consolidadas do mês (investimento, leads, cpl, roas, revenue)"
+        },
+        "links": {
+          "type": "object",
+          "description": "Links oficiais (Looker Studio, Planilha, Drive, Contrato)"
+        },
+        "accessPin": {
+          "type": "string",
+          "description": "Senha ou PIN numérico de 6 dígitos para autenticação do cliente"
+        },
+        "pinUpdatedAt": {
+          "type": "string",
+          "description": "Data da última atualização ou redefinição da chave PIN"
+        },
+        "pinResetRequested": {
+          "type": "boolean",
+          "description": "Indica se o cliente solicitou recuperação de PIN"
+        },
+        "pinResetRequestedAt": {
+          "type": "string",
+          "description": "Data e hora da solicitação de recuperação de PIN"
+        },
+        "operationMessages": {
+          "type": "array",
+          "description": "Feed de mensagens, pareceres e atualizações da operação"
+        },
+        "actionItems": {
+          "type": "array",
+          "description": "Tarefas do fluxo Kanban (UpSell e Cliente)"
+        },
+        "activeTools": {
+          "type": "array",
+          "description": "Cofre de ferramentas e credenciais vinculadas"
+        },
+        "weeklyHistory": {
+          "type": "array",
+          "description": "Histórico semanal de performance"
+        },
+        "optimizationLogs": {
+          "type": "array",
+          "description": "Logs de otimizações executadas"
+        }
+      },
+      "required": ["id", "companyName", "email"]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Usuário administrador da equipe UpSell",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "UID do Firebase Auth"
+        },
+        "email": {
+          "type": "string",
+          "description": "E-mail do administrador"
+        },
+        "role": {
+          "type": "string",
+          "description": "Papel do usuário (admin)"
+        }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/clients/{clientId}": {
+      "schema": {
+        "$ref": "#/entities/ClientProfile"
+      },
+      "description": "Coleção de perfis de clientes gerenciados pela agência UpSell"
+    },
+    "/admins/{uid}": {
+      "schema": {
+        "$ref": "#/entities/AdminUser"
+      },
+      "description": "Lista de administradores autorizados do sistema UpSell"
+    }
+  }
+}

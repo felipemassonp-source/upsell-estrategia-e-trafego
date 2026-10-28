@@ -1,0 +1,6 @@
+{
+  "name": "Upsell - Estratégia e Tráfego Pago",
+  "description": "Gestão de tráfego de alta performance em Meta Ads e Google Ads com Portal de Transparência do Cliente e Painel Administrativo de Gestão Ágil.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
