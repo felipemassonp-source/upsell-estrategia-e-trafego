@@ -296,25 +296,12 @@ function ClientEditor({
   const [contractRenewal, setContractRenewal] = useState(client.contractRenewal || '15/10/2026');
   const [contractStatus, setContractStatus] = useState(client.contractStatus || 'Contrato Vigente');
 
-  // 1.1 Chave de Acesso do Cliente (PIN de 6 dígitos)
-  const [accessPin, setAccessPin] = useState(client.accessPin || '839102');
-  const [showPin, setShowPin] = useState(false);
-
-  const handleGenerateNewPin = () => {
-    const newPin = Math.floor(100000 + Math.random() * 900000).toString();
-    setAccessPin(newPin);
-    showToast(`Novo PIN gerado: ${newPin}. Lembre-se de clicar em "Salvar Alterações".`);
-  };
-
-  const handleCopyWhatsAppInvite = () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const clientUrl = `${origin}/?cliente=${client.id}`;
-    const text = `Olá ${client.responsibleName}! 👋\n\nSegue o link exclusivo e seguro para você acompanhar o Portal de Performance da sua empresa na UpSell:\n👉 ${clientUrl}\n\n🔑 Sua chave de acesso pessoal (PIN): *${accessPin}*\n\nPor este portal você confere relatórios atualizados em tempo real, métricas de tráfego, tarefas e documentos oficiais.`;
-    if (navigator?.clipboard?.writeText) {
-      navigator.clipboard.writeText(text);
-    }
-    showToast(`Mensagem de convite com PIN copiada para o WhatsApp!`);
-  };
+  // 1.1 Controle de Acesso Seguro do Cliente (Gmail / Google Auth)
+  const [allowedEmailsInput, setAllowedEmailsInput] = useState(() => {
+    const list = client.allowedEmails || [];
+    if (list.length === 0 && client.email) return client.email;
+    return list.join(', ');
+  });
 
   // 2. Resumo da Situação Atual
   const [currentFocus, setCurrentFocus] = useState(client.currentFocus || '');
@@ -633,6 +620,11 @@ function ClientEditor({
 
   // Master Save handler
   const handleSaveAll = () => {
+    const parsedAllowedEmails = allowedEmailsInput
+      .split(',')
+      .map(e => e.trim().toLowerCase())
+      .filter(Boolean);
+
     onUpdateClient(client.id, {
       contractStart,
       contractRenewal,
@@ -653,7 +645,7 @@ function ClientEditor({
         creativeVideos: formatSafeUrl(creativeVideos),
         creativeImages: formatSafeUrl(creativeImages)
       },
-      accessPin: accessPin.trim()
+      allowedEmails: parsedAllowedEmails.length > 0 ? parsedAllowedEmails : [client.email.toLowerCase().trim()]
     });
 
     showToast(`Todas as alterações de ${client.companyName} foram salvas!`);
@@ -682,10 +674,11 @@ function ClientEditor({
   const handleCopyClientLink = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const clientUrl = `${origin}/?cliente=${client.id}`;
+    const text = `Olá ${client.responsibleName}! 👋\n\nSegue o link oficial para você acessar o Portal de Performance da ${client.companyName} na UPSELL:\n👉 ${clientUrl}\n\n🔐 O acesso é liberado automaticamente ao entrar com a sua conta Google cadastrada (${client.allowedEmails?.join(', ') || client.email}).`;
     if (navigator?.clipboard?.writeText) {
-      navigator.clipboard.writeText(clientUrl);
+      navigator.clipboard.writeText(text);
     }
-    showToast(`Link de acesso direto copiado: ${clientUrl}`);
+    showToast(`Link de acesso com autenticação Google copiado!`);
   };
 
   return (
@@ -939,77 +932,45 @@ function ClientEditor({
             </div>
           </div>
 
-          {/* Segurança & Chave de Acesso do Cliente (PIN de 6 Dígitos) */}
+          {/* Segurança & Contas Google Autorizadas para o Portal */}
           <div className={`p-6 sm:p-8 rounded-2xl ${cardBg} space-y-6 transition-colors border-2 ${isLight ? 'border-amber-200/80 bg-amber-50/20' : 'border-[#b58c56]/30 bg-[#161822]'}`}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200/80 dark:border-white/10 gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#b58c56]/15 flex items-center justify-center text-[#b58c56] shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#ed1c24]/15 flex items-center justify-center text-[#ed1c24] shrink-0">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold">Chave de Acesso do Cliente (PIN de 6 Dígitos)</h3>
+                  <h3 className="text-base sm:text-lg font-bold">Contas Google Autorizadas (Acesso Seguro ao Portal)</h3>
                   <p className="text-xs text-slate-500">
-                    Código de segurança exclusivo para {client.companyName} desbloquear o portal e o cofre de credenciais.
+                    O cliente não precisa memorizar senhas. Ele acessa com o Gmail / Google Workspace cadastrado aqui.
                   </p>
                 </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleGenerateNewPin}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                    isLight
-                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                      : 'bg-white/5 hover:bg-white/10 text-white'
-                  }`}
-                  title="Gerar novo código PIN aleatório"
-                >
-                  <RefreshCw className="w-3.5 h-3.5 text-[#b58c56]" />
-                  <span>Gerar Novo PIN</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCopyWhatsAppInvite}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#b58c56] hover:bg-[#9d7644] transition-all shadow-sm"
-                  title="Copiar mensagem formatada para WhatsApp com link e PIN"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>Copiar Convite com PIN (WhatsApp)</span>
-                </button>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-center">
               <div>
-                <label className={labelClass}>Código PIN de Desbloqueio (6 Dígitos)</label>
+                <label className={labelClass}>E-mails Google Permitidos (Separados por vírgula)</label>
                 <div className="relative">
                   <input
-                    type={showPin ? 'text' : 'password'}
-                    maxLength={10}
-                    value={accessPin}
-                    onChange={e => setAccessPin(e.target.value)}
-                    placeholder="Ex: 839102"
-                    className={`${inputClass} font-mono tracking-[0.25em] text-base font-bold pr-11`}
+                    type="text"
+                    value={allowedEmailsInput}
+                    onChange={e => setAllowedEmailsInput(e.target.value)}
+                    placeholder="ex: diretor@empresa.com, marketing@gmail.com"
+                    className={`${inputClass} text-xs`}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPin(!showPin)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white"
-                  >
-                    {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
                 </div>
                 <span className="text-[11px] text-slate-500 mt-1 block">
-                  Você pode editar manualmente ou clicar em &quot;Gerar Novo PIN&quot; e salvar as alterações.
+                  Somente as pessoas logadas nessas contas Google conseguirão visualizar os relatórios e métricas da {client.companyName}.
                 </span>
               </div>
 
               <div className={`p-4 rounded-xl ${innerBg} text-xs space-y-2`}>
                 <span className="font-semibold text-slate-700 dark:text-slate-200 block">
-                  🛡️ Como funciona a proteção em produção:
+                  🛡️ Como funciona a blindagem com Firebase Auth:
                 </span>
                 <p className="text-slate-500 leading-relaxed text-[11px]">
-                  Ao abrir o portal da <strong>{client.companyName}</strong>, uma tela elegante de cofre solicitará o PIN <strong>{accessPin}</strong>. Se o cliente esquecer, ele tem o botão de solicitar a você pelo WhatsApp, garantindo segurança total para o cofre de senhas e relatórios.
+                  Ao clicar em &quot;Já sou cliente?&quot;, o cliente autentica diretamente com o Google. O Firebase valida se o e-mail dele está cadastrado nesta lista de permissões. Se estiver, o portal da <strong>{client.companyName}</strong> é liberado automaticamente.
                 </p>
               </div>
             </div>

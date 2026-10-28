@@ -14,6 +14,7 @@ export default function HomePage() {
     activeClient,
     activeClientId,
     userRole,
+    authUser,
     isHydrated,
     selectClient,
     setRole,
@@ -38,25 +39,29 @@ export default function HomePage() {
     }
   }, [selectClient, setRole]);
 
-  // If authenticated as Client (rendered safely after client-side hydration)
-  if (isHydrated && userRole === 'client') {
-    return (
-      <SmoothScroll>
-        <ClientPortal
-          key={activeClient.id}
-          client={activeClient}
-          clientsList={clients}
-          onSelectClient={selectClient}
-          onLogout={() => setRole('guest')}
-          onOpenAdmin={() => setRole('admin')}
-          onUpdateClient={updateClientData}
-        />
-      </SmoothScroll>
-    );
-  }
+  // Proteção: Somente carrega as visões de Client ou Admin se o usuário estiver autenticado via Firebase Auth
+  const isUserAuthenticated = !!authUser;
+  const isMasterAdmin = authUser?.email?.toLowerCase().trim() === 'felipemassonp@gmail.com';
 
-  // If authenticated as Admin (rendered safely after client-side hydration)
+  // Se autenticado como Admin Master (somente felipemassonp@gmail.com)
   if (isHydrated && userRole === 'admin') {
+    if (!isUserAuthenticated || !isMasterAdmin) {
+      // Bloqueio de segurança: força tela de login se tentar burlar papel de admin
+      return (
+        <>
+          <HomeExperience onOpenAuth={() => setIsAuthModalOpen(true)} />
+          <EditorialAuthModal
+            isOpen={true}
+            onClose={() => {
+              setRole('guest');
+              setIsAuthModalOpen(false);
+            }}
+            onLogin={(role) => setRole(role)}
+          />
+        </>
+      );
+    }
+
     return (
       <SmoothScroll>
         <AdminPanel
@@ -71,8 +76,48 @@ export default function HomePage() {
             selectClient(id);
             setRole('client');
           }}
-          onLogout={() => setRole('guest')}
+          onLogout={() => {
+            setRole('guest');
+          }}
           onResetDefault={resetToDefault}
+        />
+      </SmoothScroll>
+    );
+  }
+
+  // Se autenticado como Cliente com conta Google
+  if (isHydrated && userRole === 'client') {
+    // Se não tiver login do Google ativo ou for um visitante sem autenticação, solicita autenticação
+    if (!isUserAuthenticated) {
+      return (
+        <>
+          <HomeExperience onOpenAuth={() => setIsAuthModalOpen(true)} />
+          <EditorialAuthModal
+            isOpen={true}
+            onClose={() => {
+              setRole('guest');
+              setIsAuthModalOpen(false);
+            }}
+            onLogin={(role) => setRole(role)}
+          />
+        </>
+      );
+    }
+
+    return (
+      <SmoothScroll>
+        <ClientPortal
+          key={activeClient.id}
+          client={activeClient}
+          clientsList={clients}
+          onSelectClient={selectClient}
+          onLogout={() => {
+            setRole('guest');
+          }}
+          onOpenAdmin={() => {
+            if (isMasterAdmin) setRole('admin');
+          }}
+          onUpdateClient={updateClientData}
         />
       </SmoothScroll>
     );

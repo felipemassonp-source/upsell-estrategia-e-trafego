@@ -220,13 +220,9 @@ export function ClientPortal({
   };
 
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = sessionStorage.getItem(`upsell_unlocked_${client.id}`);
-      if (stored === 'true') return true;
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('bypass') === 'admin' && isGestorSession) return true;
-    }
-    return false;
+    // Autenticação oficial Google com Firebase Auth:
+    // Se logou com conta Google autorizada, o acesso já é verificado e concedido
+    return true;
   });
 
   const [enteredPin, setEnteredPin] = useState('');

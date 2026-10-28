@@ -2,47 +2,231 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Global Safety Net
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: clients
+    // Document ID: clientId (string, 1-128 chars)
+    // Fields:
+    //   - companyName: string (1-200 chars) [required]
+    //   - email: string (5-254 chars, valid email) [required]
+    //   - id: string (optional, 1-128 chars)
+    //   - segment: string (optional, 1-200 chars)
+    //   - responsibleName: string (optional, 1-200 chars)
+    //   - contractStatus: string (optional, 1-100 chars)
+    //   - contractStart: string (optional, 1-100 chars)
+    //   - contractRenewal: string (optional, 1-100 chars)
+    //   - scope: list of strings (optional, <= 50 items)
+    //   - activeChannels: list of strings (optional, <= 50 items)
+    //   - currentFocus: string (optional, <= 5000 chars)
+    //   - nextSteps: string (optional, <= 5000 chars)
+    //   - metrics: map (optional, ClientMetrics)
+    //   - links: map (optional, ClientLinks)
+    //   - allowedEmails: list of strings (optional, <= 100 items)
+    //   - accessPin: string (optional, <= 128 chars)
+    //   - pinUpdatedAt: string (optional, <= 100 chars)
+    //   - pinResetRequested: bool (optional)
+    //   - pinResetRequestedAt: string (optional, <= 100 chars)
+    //   - actionItems: list of maps (optional, <= 500 items)
+    //   - activeTools: list of maps (optional, <= 100 items)
+    //   - operationMessages: list of maps (optional, <= 1000 items)
+    //   - weeklyHistory: list of maps (optional, <= 500 items)
+    //   - optimizationLogs: list of maps (optional, <= 500 items)
+    //
+    // Collection: admins
+    // Document ID: uid or email (string, 1-128 chars)
+    // Fields:
+    //   - email: string (optional, valid email)
+    //   - role: string (optional)
+    //
+    // Collection: test
+    // Document ID: docId (startup connection verification)
+    //
+    // ===============================================================
+
+    // Global Safety Net: Default Deny
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Helper functions
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if user is authenticated with Firebase Auth
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isBootstrappedAdmin() {
+    // Safely extract the authenticated user's email in lowercase
+    function userEmail() {
+      return isSignedIn() && request.auth.token.email != null
+        ? request.auth.token.email.lower()
+        : '';
+    }
+
+    // Super Admin bootstrap email
+    function isSuperAdmin() {
+      return isSignedIn() && userEmail() == 'felipemassonp@gmail.com';
+    }
+
+    // Admin verified through admins collection record (by UID or email)
+    function isDbAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == 'felipemassonp@gmail.com' ||
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (userEmail() != '' && exists(/databases/$(database)/documents/admins/$(userEmail())))
       );
     }
 
+    // Admin check: super admin OR database-verified admin
+    function isAdmin() {
+      return isSuperAdmin() || isDbAdmin();
+    }
+
+    // Check if authenticated user is the designated client or listed in allowedEmails
+    function isClientFor(docData) {
+      return isSignedIn() && userEmail() != '' && (
+        ('email' in docData && docData.email is string && (
+          userEmail() == docData.email.lower() ||
+          (request.auth.token.email != null && request.auth.token.email == docData.email)
+        )) ||
+        ('allowedEmails' in docData && docData.allowedEmails is list && (
+          userEmail() in docData.allowedEmails ||
+          (request.auth.token.email != null && request.auth.token.email in docData.allowedEmails)
+        ))
+      );
+    }
+
+    // Validate document ID length and type
     function isValidId(id) {
       return id is string && id.size() > 0 && id.size() <= 128;
     }
 
-    // Startup connection validation
+    // Validate email format and length bounds
+    function isValidEmail(email) {
+      return email is string &&
+        email.size() >= 5 &&
+        email.size() <= 254 &&
+        email.matches('^.+@.+\\..+$');
+    }
+
+    // Domain Validator: Enforce strict client document schema and DoS limits
+    function isValidClient(data) {
+      return data is map &&
+        // Required core fields
+        ('companyName' in data && data.companyName is string && data.companyName.size() > 0 && data.companyName.size() <= 200) &&
+        ('email' in data && isValidEmail(data.email)) &&
+
+        // Optional text fields with bounds
+        (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
+        (!('segment' in data) || (data.segment is string && data.segment.size() <= 200)) &&
+        (!('responsibleName' in data) || (data.responsibleName is string && data.responsibleName.size() <= 200)) &&
+        (!('contractStatus' in data) || (data.contractStatus is string && data.contractStatus.size() <= 100)) &&
+        (!('contractStart' in data) || (data.contractStart is string && data.contractStart.size() <= 100)) &&
+        (!('contractRenewal' in data) || (data.contractRenewal is string && data.contractRenewal.size() <= 100)) &&
+        (!('currentFocus' in data) || (data.currentFocus is string && data.currentFocus.size() <= 5000)) &&
+        (!('nextSteps' in data) || (data.nextSteps is string && data.nextSteps.size() <= 5000)) &&
+        (!('accessPin' in data) || (data.accessPin is string && data.accessPin.size() <= 128)) &&
+        (!('pinUpdatedAt' in data) || (data.pinUpdatedAt is string && data.pinUpdatedAt.size() <= 100)) &&
+        (!('pinResetRequested' in data) || data.pinResetRequested is bool) &&
+        (!('pinResetRequestedAt' in data) || (data.pinResetRequestedAt is string && data.pinResetRequestedAt.size() <= 100)) &&
+
+        // Optional array fields with DoS size limits
+        (!('scope' in data) || (data.scope is list && data.scope.size() <= 50)) &&
+        (!('activeChannels' in data) || (data.activeChannels is list && data.activeChannels.size() <= 50)) &&
+        (!('allowedEmails' in data) || (data.allowedEmails is list && data.allowedEmails.size() <= 100)) &&
+        (!('actionItems' in data) || (data.actionItems is list && data.actionItems.size() <= 500)) &&
+        (!('activeTools' in data) || (data.activeTools is list && data.activeTools.size() <= 100)) &&
+        (!('operationMessages' in data) || (data.operationMessages is list && data.operationMessages.size() <= 1000)) &&
+        (!('weeklyHistory' in data) || (data.weeklyHistory is list && data.weeklyHistory.size() <= 500)) &&
+        (!('optimizationLogs' in data) || (data.optimizationLogs is list && data.optimizationLogs.size() <= 500)) &&
+
+        // Optional map structures
+        (!('metrics' in data) || data.metrics is map) &&
+        (!('links' in data) || data.links is map);
+    }
+
+    // Client Update Validator: Permits ONLY interaction fields and strictly protects business data
+    function isValidClientUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'operationMessages',
+          'actionItems',
+          'pinResetRequested',
+          'pinResetRequestedAt'
+        ]) &&
+        // Immutable business fields check: client can NEVER alter these
+        (!('email' in request.resource.data) || request.resource.data.email == resource.data.email) &&
+        (!('allowedEmails' in request.resource.data) || request.resource.data.allowedEmails == resource.data.allowedEmails) &&
+        (!('metrics' in request.resource.data) || request.resource.data.metrics == resource.data.metrics) &&
+        (!('links' in request.resource.data) || request.resource.data.links == resource.data.links) &&
+        (!('contractStatus' in request.resource.data) || request.resource.data.contractStatus == resource.data.contractStatus) &&
+        (!('contractStart' in request.resource.data) || request.resource.data.contractStart == resource.data.contractStart) &&
+        (!('contractRenewal' in request.resource.data) || request.resource.data.contractRenewal == resource.data.contractRenewal) &&
+        (!('id' in request.resource.data) || request.resource.data.id == resource.data.id) &&
+
+        // Payload validation for client-updated interaction fields
+        (!('operationMessages' in request.resource.data) || (
+          request.resource.data.operationMessages is list &&
+          request.resource.data.operationMessages.size() <= 1000
+        )) &&
+        (!('actionItems' in request.resource.data) || (
+          request.resource.data.actionItems is list &&
+          request.resource.data.actionItems.size() <= 500
+        )) &&
+        (!('pinResetRequested' in request.resource.data) || request.resource.data.pinResetRequested is bool) &&
+        (!('pinResetRequestedAt' in request.resource.data) || (
+          request.resource.data.pinResetRequestedAt is string &&
+          request.resource.data.pinResetRequestedAt.size() <= 100
+        ));
+    }
+
+    // ===============================================================
+    // Startup / Health Check Collection
+    // ===============================================================
     match /test/{docId} {
       allow read: if true;
       allow write: if false;
     }
 
-    // UpSell Clients Collection
+    // ===============================================================
+    // UpSell Clients Collection & Subcollections
+    // ===============================================================
     match /clients/{clientId} {
-      // allow get on individual client doc with id check; allow list on collection
-      allow get: if isValidId(clientId);
-      allow list: if true;
-      allow create, update: if isValidId(clientId);
-      allow delete: if isValidId(clientId);
+      // 1. Get: Admin can read any client. A client can ONLY get their own specific document.
+      allow get: if isValidId(clientId) && (isAdmin() || isClientFor(resource.data));
+
+      // 2. List: ONLY Admins can list all clients. Clients can NEVER list the collection.
+      allow list: if isAdmin();
+
+      // 3. Create: ONLY Admins can create client documents.
+      allow create: if isAdmin() && isValidId(clientId) && isValidClient(request.resource.data);
+
+      // 4. Update:
+      //    - Admins can update any client document (validated via isValidClient).
+      //    - Clients can ONLY update permitted interaction fields on their own document.
+      allow update: if isValidId(clientId) && (
+        (isAdmin() && isValidClient(request.resource.data)) ||
+        (isClientFor(resource.data) && isValidClientUpdate() && isValidClient(request.resource.data))
+      );
+
+      // 5. Delete: ONLY Admins can delete client documents.
+      allow delete: if isAdmin() && isValidId(clientId);
+
+      // Subcollections within clients (e.g., attachments, logs, audits)
+      // Admin has full read and write access across all subcollections
+      match /{allSubcollections=**} {
+        allow read, write: if isAdmin();
+      }
     }
 
+    // ===============================================================
     // Admins Collection
+    // ===============================================================
     match /admins/{uid} {
-      allow get: if isSignedIn() && isValidId(uid);
-      allow list: if isBootstrappedAdmin();
-      allow write: if isBootstrappedAdmin() && isValidId(uid);
+      allow get: if isSignedIn() && isValidId(uid) && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow write: if isAdmin() && isValidId(uid);
     }
   }
 }

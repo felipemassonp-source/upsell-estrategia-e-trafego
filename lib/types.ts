@@ -96,7 +96,8 @@ export interface ClientProfile {
   nextSteps: string;
   metrics: ClientMetrics;
   links: ClientLinks;
-  accessPin?: string; // Senha ou PIN de 6 dígitos para acesso seguro do cliente
+  allowedEmails?: string[]; // Lista de e-mails Google (Gmail / Workspace) com permissão de acesso ao portal desta empresa
+  accessPin?: string; // Senha ou PIN legado (opcional)
   pinUpdatedAt?: string; // Data da última atualização ou redefinição da chave
   pinResetRequested?: boolean; // Flag se o cliente solicitou redefinição
   pinResetRequestedAt?: string; // Data/hora da solicitação de recuperação
