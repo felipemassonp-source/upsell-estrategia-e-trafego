@@ -128,34 +128,26 @@ const statement: { text: string; accent?: boolean }[] = [
 const symptoms: {
   id: ServiceKey;
   n: string;
-  pain: string;
-  cause: string;
-  howWeSolve: string;
-  service: string;
+  problem: string;
+  fix: string;
 }[] = [
   {
     id: 'trafego',
     n: '01',
-    pain: 'Você investe em anúncios todo mês, mas não sabe exatamente de onde veio o retorno.',
-    cause: 'Falta de rastreamento de conversão e campanhas distribuídas sem leitura clara de CAC.',
-    howWeSolve: 'Configuramos pixels e eventos de ponta a ponta para direcionar a verba aos públicos e criativos que realmente trazem clientes.',
-    service: 'Solução em Tráfego Pago',
+    problem: 'Você investe em anúncios e não sabe exatamente o que voltou.',
+    fix: 'Tráfego pago com rastreamento e dados reais',
   },
   {
     id: 'sites',
     n: '02',
-    pain: 'Seu site até recebe visitas e parece bonito, mas quase ninguém clica para conversar.',
-    cause: 'Páginas sem hierarquia de conteúdo, proposta de valor confusa e botões de contato escondidos.',
-    howWeSolve: 'Criamos uma página com narrativa persuasiva, carregamento rápido e caminhos óbvios para o visitante virar lead qualificado.',
-    service: 'Solução em Criação de Sites',
+    problem: 'Seu site até é bonito, mas quase ninguém clica para conversar.',
+    fix: 'Site autoral com narrativa pensada para converter',
   },
   {
     id: 'comercial',
     n: '03',
-    pain: 'Os contatos até chegam no WhatsApp, mas esfriam e se perdem antes da proposta.',
-    cause: 'Atendimento sem padrão de tempo de resposta, sem qualificação prévia e sem rotina de follow-up.',
-    howWeSolve: 'Mapeamos onde o lead trava no funil e criamos roteiros práticos para a equipe conduzir o contato até o fechamento.',
-    service: 'Solução em Consultoria Comercial',
+    problem: 'Os contatos chegam no WhatsApp e se perdem antes da proposta.',
+    fix: 'Processo comercial e roteiros de follow-up',
   },
 ];
 
@@ -662,49 +654,29 @@ export function HomeExperience({ onOpenAuth }: { onOpenAuth: () => void }) {
                 onClick={() => setActiveService(s.id)}
                 data-reveal
                 style={d(i * 120)}
-                className="symptom reveal-item group relative flex flex-col justify-between overflow-hidden bg-[#f7f7f4] p-6 sm:p-8"
+                className="symptom reveal-item group relative flex flex-col justify-between gap-8 overflow-hidden bg-[#f7f7f4] p-6 sm:p-8"
               >
                 <span className="symptom-fill absolute inset-0 origin-bottom bg-[#141414]" aria-hidden="true" />
                 
-                {/* Cabeçalho do Card */}
-                <div className="relative mb-6">
+                {/* Topo do card: Índice + Label de Problema */}
+                <div className="relative">
                   <div className="flex items-center justify-between font-mono text-xs text-[#ed1c24]">
-                    <span>{s.n} / Diagnóstico de Gargalo</span>
+                    <span>{s.n} / SE O SEU CENÁRIO FOR:</span>
                     <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
                   </div>
-                  <h3 className="mt-3 text-lg sm:text-xl font-bold leading-snug text-[#141414] transition-colors duration-500 group-hover:text-white">
-                    “{s.pain}”
-                  </h3>
+                  <p className="mt-4 text-xl sm:text-2xl font-semibold leading-snug text-[#141414] transition-colors duration-500 group-hover:text-white">
+                    “{s.problem}”
+                  </p>
                 </div>
 
-                {/* Conexão Causa -> Como a UPSELL Resolve */}
-                <div className="relative my-4 space-y-3 border-y border-black/10 py-4 transition-colors duration-500 group-hover:border-white/15">
-                  <div>
-                    <span className="block text-[9px] font-bold uppercase tracking-[0.16em] text-black/45 transition-colors duration-500 group-hover:text-white/40">
-                      Por que isso acontece:
-                    </span>
-                    <p className="mt-1 text-xs sm:text-[13px] leading-relaxed text-black/70 transition-colors duration-500 group-hover:text-white/70">
-                      {s.cause}
-                    </p>
-                  </div>
-                  <div className="pt-2">
-                    <span className="block text-[9px] font-bold uppercase tracking-[0.16em] text-[#ed1c24] transition-colors duration-500 group-hover:text-[#ff8388]">
-                      Como a UPSELL resolve:
-                    </span>
-                    <p className="mt-1 text-xs sm:text-[13px] font-medium leading-relaxed text-[#141414] transition-colors duration-500 group-hover:text-white">
-                      {s.howWeSolve}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Rodapé do Card com CTA para a seção */}
-                <div className="relative mt-4 flex items-center justify-between pt-2">
-                  <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#ed1c24] transition-colors duration-500 group-hover:text-[#ff8388]">
-                    <span className="h-px w-5 bg-[#ed1c24] transition-colors duration-500 group-hover:bg-[#ff8388]" />
-                    {s.service}
+                {/* Base do card: Conexão direta com o que resolve */}
+                <div className="relative border-t border-black/10 pt-4 transition-colors duration-500 group-hover:border-white/15">
+                  <span className="block text-[9px] font-bold uppercase tracking-[0.18em] text-black/45 transition-colors duration-500 group-hover:text-white/40">
+                    O caminho para resolver:
                   </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-black/40 transition-colors duration-500 group-hover:text-white/50">
-                    Ver detalhes ↓
+                  <span className="mt-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#ed1c24] transition-colors duration-500 group-hover:text-[#ff8388]">
+                    <span className="h-px w-5 bg-[#ed1c24] transition-colors duration-500 group-hover:bg-[#ff8388]" />
+                    {s.fix}
                   </span>
                 </div>
               </a>
