@@ -616,21 +616,6 @@ export function HomeExperience({ onOpenAuth }: { onOpenAuth: () => void }) {
           </div>
         </section>
 
-        {/* ============================ MARQUEE ============================ */}
-        <div aria-hidden="true" className="relative z-10 -rotate-[1.2deg] scale-[1.03] overflow-hidden border-y-2 border-[#141414] bg-[#ed1c24] py-4 text-white">
-          <div className="animate-marquee">
-            {[0, 1].map((dup) => (
-              <div key={dup} className="flex shrink-0 items-center">
-                {marqueeItems.map((item) => (
-                  <span key={`${dup}-${item}`} className="font-display flex items-center gap-8 pr-8 text-3xl font-black uppercase sm:text-5xl">
-                    {item}<span className="text-[#141414]">✳</span>
-                  </span>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* ========================= DECLARAÇÃO / DOR ========================= */}
         <section className="mx-auto max-w-[1440px] px-5 py-20 sm:px-10 sm:py-28 lg:px-14">
           <p className="mb-8 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.22em] text-[#ed1c24]"><span className="h-px w-8 bg-[#ed1c24]" /> O ponto de partida</p>
