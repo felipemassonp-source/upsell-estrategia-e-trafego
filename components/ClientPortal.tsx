@@ -370,12 +370,12 @@ export function ClientPortal({
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
               <span className="inline-block w-2 h-2 rounded-full bg-[#ed1c24]" />
-              <span className="font-display tracking-[0.14em] text-base uppercase">
+              <span className="font-bold tracking-wide text-base">
                 UPSELL
               </span>
             </div>
             <span className={isLight ? 'text-[#141414]/30' : 'text-white/30'}>/</span>
-            <span className="font-mono text-[11px] uppercase tracking-[0.16em] font-semibold">
+            <span className="text-xs uppercase tracking-wider font-semibold opacity-85">
               Portal do Cliente
             </span>
 
@@ -388,7 +388,7 @@ export function ClientPortal({
                 }`}
               >
                 <Building2 className="w-3.5 h-3.5 text-[#ed1c24]" />
-                <span className={`font-mono text-[10px] uppercase ${mutedText}`}>Cliente:</span>
+                <span className={`text-xs font-semibold ${mutedText}`}>Cliente:</span>
                 <select
                   value={client.id}
                   onChange={e => onSelectClient(e.target.value)}
@@ -421,7 +421,7 @@ export function ClientPortal({
           {/* Right: Status, Theme, Admin Console, Logout */}
           <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-between md:justify-end">
             <div
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono uppercase tracking-wider font-bold border ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
                 isLight
                   ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
                   : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
@@ -488,13 +488,13 @@ export function ClientPortal({
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
             <div className="space-y-3 max-w-2xl">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] px-2.5 py-1 rounded bg-[#ed1c24]/10 text-[#ed1c24] font-bold">
+                <span className="text-xs uppercase tracking-wide px-3 py-1 rounded-md bg-[#ed1c24]/10 text-[#ed1c24] font-bold">
                   {client.segment}
                 </span>
                 {(client.activeChannels || ['Meta Ads', 'Google Ads']).map((ch) => (
                   <span
                     key={ch}
-                    className={`font-mono text-[10px] uppercase tracking-[0.14em] px-2.5 py-1 rounded border ${
+                    className={`text-xs uppercase tracking-wide px-3 py-1 rounded-md border font-semibold ${
                       isLight ? 'bg-[#f7f7f4] border-[#141414]/12 text-[#141414]/80' : 'bg-white/5 border-white/10 text-white/80'
                     }`}
                   >
@@ -503,7 +503,7 @@ export function ClientPortal({
                 ))}
               </div>
 
-              <h1 className="font-display text-3xl sm:text-5xl uppercase tracking-tight leading-[0.95]">
+              <h1 className="font-heading text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight text-[#141414] dark:text-[#f7f7f4]">
                 {client.companyName}
               </h1>
 
@@ -515,21 +515,21 @@ export function ClientPortal({
             {/* Ficha Técnica da Parceria */}
             <div className={`p-4 sm:p-5 rounded-xl ${subtleBox} min-w-[290px] sm:min-w-[330px] space-y-2.5 text-xs`}>
               <div className="flex items-center justify-between gap-4">
-                <span className={`font-mono text-[10px] uppercase tracking-wider ${mutedText}`}>Responsável:</span>
+                <span className={`text-xs font-semibold ${mutedText}`}>Responsável:</span>
                 <strong className="font-bold text-right">{client.responsibleName}</strong>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className={`font-mono text-[10px] uppercase tracking-wider ${mutedText}`}>Conta Autorizada:</span>
-                <span className="font-mono text-[11px] font-semibold truncate max-w-[190px]">{client.email}</span>
+                <span className={`text-xs font-semibold ${mutedText}`}>Conta Autorizada:</span>
+                <span className="font-mono text-xs font-medium truncate max-w-[190px]">{client.email}</span>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className={`font-mono text-[10px] uppercase tracking-wider ${mutedText}`}>Vigência:</span>
-                <span className="font-mono text-[11px] font-semibold">
+                <span className={`text-xs font-semibold ${mutedText}`}>Vigência:</span>
+                <span className="text-xs font-medium">
                   {client.contractStart} → {client.contractRenewal}
                 </span>
               </div>
               <div className={`pt-2.5 border-t ${hairline} flex items-center justify-between`}>
-                <span className={`font-mono text-[10px] uppercase tracking-wider ${mutedText}`}>Instrumento Legal:</span>
+                <span className={`text-xs font-semibold ${mutedText}`}>Instrumento Legal:</span>
                 <button
                   type="button"
                   onClick={() => setIsContractModalOpen(true)}
@@ -549,7 +549,7 @@ export function ClientPortal({
                 <Clock className="w-3.5 h-3.5 text-[#ed1c24]" />
                 <span className="font-bold">{client.contractStatus}</span>
               </div>
-              <div className={`flex flex-wrap items-center gap-2 font-mono text-[11px] ${mutedText}`}>
+              <div className={`flex flex-wrap items-center gap-2 text-xs font-medium ${mutedText}`}>
                 <span>Início: {client.contractStart}</span>
                 <span>·</span>
                 <span className="font-bold text-[#ed1c24]">
@@ -588,7 +588,7 @@ export function ClientPortal({
                 : 'text-white/70 hover:text-white hover:bg-white/5'
             }`}
           >
-            <span className="font-mono text-[10px] opacity-70">01</span>
+            <span className="text-xs font-bold opacity-60">01</span>
             <Compass className="w-3.5 h-3.5" />
             <span>Resumo & Indicadores do Mês</span>
           </button>
@@ -604,11 +604,11 @@ export function ClientPortal({
                 : 'text-white/70 hover:text-white hover:bg-white/5'
             }`}
           >
-            <span className="font-mono text-[10px] opacity-70">02</span>
+            <span className="text-xs font-bold opacity-60">02</span>
             <TrendingUp className="w-3.5 h-3.5" />
             <span>Gráfico Semanal & Otimizações</span>
             <span
-              className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${
+              className={`text-xs font-bold px-2 py-0.5 rounded ${
                 activeTab === 'evolucao'
                   ? 'bg-white/20 text-white'
                   : isLight
@@ -631,11 +631,11 @@ export function ClientPortal({
                 : 'text-white/70 hover:text-white hover:bg-white/5'
             }`}
           >
-            <span className="font-mono text-[10px] opacity-70">03</span>
+            <span className="text-xs font-bold opacity-60">03</span>
             <LayoutGrid className="w-3.5 h-3.5" />
             <span>Tarefas & Pendências</span>
             {clientPendingTasks.length > 0 && (
-              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#ed1c24] text-white font-bold">
+              <span className="text-xs px-2 py-0.5 rounded bg-[#ed1c24] text-white font-bold">
                 {clientPendingTasks.length} sua(s)
               </span>
             )}
@@ -652,7 +652,7 @@ export function ClientPortal({
                 : 'text-white/70 hover:text-white hover:bg-white/5'
             }`}
           >
-            <span className="font-mono text-[10px] opacity-70">04</span>
+            <span className="text-xs font-bold opacity-60">04</span>
             <FolderOpen className="w-3.5 h-3.5" />
             <span>Criativos, Relatórios & Acessos</span>
           </button>
@@ -661,12 +661,12 @@ export function ClientPortal({
             <button
               type="button"
               onClick={() => setActiveTab('tudo')}
-              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-[11px] font-mono uppercase tracking-wider font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'tudo'
                   ? 'bg-[#141414] text-white dark:bg-[#ed1c24] dark:text-white'
                   : isLight
-                  ? 'text-[#141414]/60 hover:text-[#141414] hover:bg-[#f7f7f4]'
-                  : 'text-white/60 hover:text-white hover:bg-white/5'
+                  ? 'text-[#141414]/65 hover:text-[#141414] hover:bg-[#f7f7f4]'
+                  : 'text-white/65 hover:text-white hover:bg-white/5'
               }`}
               title="Exibir todas as seções abaixo uma da outra"
             >
@@ -696,7 +696,7 @@ export function ClientPortal({
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ed1c24] font-bold">
+                      <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold">
                         Ação Necessária da Sua Equipe
                       </span>
                     </div>
@@ -723,10 +723,10 @@ export function ClientPortal({
             <section className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
                 <div>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#ed1c24] font-bold block">
+                  <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                     01.A · Bússola da Operação
                   </span>
-                  <h2 className="font-display text-2xl sm:text-3xl uppercase tracking-tight mt-0.5">
+                  <h2 className="font-heading text-xl sm:text-2xl font-bold tracking-tight mt-0.5 text-[#141414] dark:text-[#f7f7f4]">
                     Direcionamento Estratégico Atual
                   </h2>
                 </div>
@@ -740,12 +740,12 @@ export function ClientPortal({
                 <div className={`p-6 sm:p-7 rounded-2xl ${surfaceCard} flex flex-col justify-between space-y-4`}>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.18em] px-2.5 py-1 rounded bg-[#ed1c24]/10 text-[#ed1c24] font-bold">
+                      <span className="text-xs uppercase tracking-wide px-2.5 py-1 rounded bg-[#ed1c24]/10 text-[#ed1c24] font-bold">
                         Em Execução Agora
                       </span>
                       <Target className="w-4 h-4 text-[#ed1c24]" />
                     </div>
-                    <h3 className="font-display text-xl uppercase tracking-tight">
+                    <h3 className="font-heading text-lg font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                       Qual é o foco atual das campanhas?
                     </h3>
                     <p className="text-xs sm:text-sm leading-relaxed font-medium">
@@ -753,9 +753,9 @@ export function ClientPortal({
                         'Otimização contínua das campanhas ativas em Meta Ads e Google Ads para reduzir o custo por conversa qualificada.'}
                     </p>
                   </div>
-                  <div className={`pt-3 border-t ${hairline} flex items-center justify-between text-[11px] ${mutedText}`}>
+                  <div className={`pt-3 border-t ${hairline} flex items-center justify-between text-xs ${mutedText}`}>
                     <span>Monitoramento diário pelo Gestor UPSELL</span>
-                    <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">● Ativo</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">● Ativo</span>
                   </div>
                 </div>
 
@@ -764,7 +764,7 @@ export function ClientPortal({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span
-                        className={`font-mono text-[10px] uppercase tracking-[0.18em] px-2.5 py-1 rounded font-bold ${
+                        className={`text-xs uppercase tracking-wide px-2.5 py-1 rounded font-bold ${
                           isLight ? 'bg-[#141414] text-white' : 'bg-white/15 text-white'
                         }`}
                       >
@@ -772,7 +772,7 @@ export function ClientPortal({
                       </span>
                       <Zap className="w-4 h-4 text-[#ed1c24]" />
                     </div>
-                    <h3 className="font-display text-xl uppercase tracking-tight">
+                    <h3 className="font-heading text-lg font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                       O que entrará em ação a seguir?
                     </h3>
                     <p className="text-xs sm:text-sm leading-relaxed font-medium">
@@ -780,7 +780,7 @@ export function ClientPortal({
                         'Validação de novos criativos de anúncios, revisão das termos de pesquisa no Google e escala gradual das campanhas vencedoras.'}
                     </p>
                   </div>
-                  <div className={`pt-3 border-t ${hairline} flex items-center justify-between text-[11px] ${mutedText}`}>
+                  <div className={`pt-3 border-t ${hairline} flex items-center justify-between text-xs ${mutedText}`}>
                     <span>Planejamento tático da equipe</span>
                     <button
                       type="button"
@@ -798,10 +798,10 @@ export function ClientPortal({
             <section className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
                 <div>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#ed1c24] font-bold block">
+                  <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                     01.B · Números Consolidados do Ciclo
                   </span>
-                  <h2 className="font-display text-2xl sm:text-3xl uppercase tracking-tight mt-0.5">
+                  <h2 className="font-heading text-xl sm:text-2xl font-bold tracking-tight mt-0.5 text-[#141414] dark:text-[#f7f7f4]">
                     Indicadores de Resultado (Com Explicação)
                   </h2>
                 </div>
@@ -815,12 +815,12 @@ export function ClientPortal({
                 <div className={`p-5 sm:p-6 rounded-2xl ${surfaceCard} flex flex-col justify-between space-y-4`}>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`font-mono text-[10px] uppercase tracking-[0.16em] font-bold ${mutedText}`}>
+                      <span className={`text-xs font-semibold uppercase tracking-wide ${mutedText}`}>
                         01 · Investimento em Mídia
                       </span>
                       {client.metrics?.growth?.investment && (
                         <span
-                          className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded ${
+                          className={`text-xs font-bold px-2 py-0.5 rounded ${
                             isLight ? 'bg-[#f7f7f4] text-[#141414]' : 'bg-white/10 text-white'
                           }`}
                         >
@@ -828,12 +828,12 @@ export function ClientPortal({
                         </span>
                       )}
                     </div>
-                    <div className="font-display text-3xl sm:text-4xl tracking-tight">
+                    <div className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums text-[#141414] dark:text-[#f7f7f4]">
                       R$ {(client.metrics?.investment || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
                     </div>
                   </div>
-                  <div className={`p-3 rounded-xl ${subtleBox} text-[11px] leading-relaxed`}>
-                    <strong className="block mb-0.5 text-[#ed1c24] font-mono uppercase text-[10px]">
+                  <div className={`p-3 rounded-xl ${subtleBox} text-xs leading-relaxed`}>
+                    <strong className="block mb-0.5 text-[#ed1c24] text-xs font-bold uppercase tracking-wide">
                       O que significa:
                     </strong>
                     Valor aplicado diretamente nas plataformas de anúncio (Meta Ads e Google Ads) para exibir sua marca.
@@ -844,21 +844,21 @@ export function ClientPortal({
                 <div className={`p-5 sm:p-6 rounded-2xl ${surfaceCard} flex flex-col justify-between space-y-4`}>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`font-mono text-[10px] uppercase tracking-[0.16em] font-bold ${mutedText}`}>
+                      <span className={`text-xs font-semibold uppercase tracking-wide ${mutedText}`}>
                         02 · Oportunidades (Leads)
                       </span>
                       {client.metrics?.growth?.leads && (
-                        <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
                           {client.metrics.growth.leads}
                         </span>
                       )}
                     </div>
-                    <div className="font-display text-3xl sm:text-4xl tracking-tight">
-                      {(client.metrics?.leads || 0).toLocaleString('pt-BR')} <span className="text-lg font-sans font-semibold">contatos</span>
+                    <div className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums text-[#141414] dark:text-[#f7f7f4]">
+                      {(client.metrics?.leads || 0).toLocaleString('pt-BR')} <span className="text-base font-normal opacity-70">contatos</span>
                     </div>
                   </div>
-                  <div className={`p-3 rounded-xl ${subtleBox} text-[11px] leading-relaxed`}>
-                    <strong className="block mb-0.5 text-[#ed1c24] font-mono uppercase text-[10px]">
+                  <div className={`p-3 rounded-xl ${subtleBox} text-xs leading-relaxed`}>
+                    <strong className="block mb-0.5 text-[#ed1c24] text-xs font-bold uppercase tracking-wide">
                       O que significa:
                     </strong>
                     Pessoas interessadas que clicaram nos seus anúncios e chamaram no WhatsApp ou preencheram cadastro.
@@ -869,21 +869,21 @@ export function ClientPortal({
                 <div className={`p-5 sm:p-6 rounded-2xl ${surfaceCard} flex flex-col justify-between space-y-4`}>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`font-mono text-[10px] uppercase tracking-[0.16em] font-bold ${mutedText}`}>
+                      <span className={`text-xs font-semibold uppercase tracking-wide ${mutedText}`}>
                         03 · Custo por Lead (CPL)
                       </span>
                       {client.metrics?.growth?.cpl && (
-                        <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
                           {client.metrics.growth.cpl}
                         </span>
                       )}
                     </div>
-                    <div className="font-display text-3xl sm:text-4xl tracking-tight">
+                    <div className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums text-[#141414] dark:text-[#f7f7f4]">
                       R$ {Number(client.metrics?.cpl || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                   </div>
-                  <div className={`p-3 rounded-xl ${subtleBox} text-[11px] leading-relaxed`}>
-                    <strong className="block mb-0.5 text-[#ed1c24] font-mono uppercase text-[10px]">
+                  <div className={`p-3 rounded-xl ${subtleBox} text-xs leading-relaxed`}>
+                    <strong className="block mb-0.5 text-[#ed1c24] text-xs font-bold uppercase tracking-wide">
                       O que significa:
                     </strong>
                     Quanto custou em média atrair cada novo interessado (Investimento dividido pelo total de contatos).
@@ -894,26 +894,26 @@ export function ClientPortal({
                 <div className={`p-5 sm:p-6 rounded-2xl ${surfaceCard} flex flex-col justify-between space-y-4`}>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`font-mono text-[10px] uppercase tracking-[0.16em] font-bold ${mutedText}`}>
+                      <span className={`text-xs font-semibold uppercase tracking-wide ${mutedText}`}>
                         04 · Multiplicador (ROAS)
                       </span>
                       {client.metrics?.growth?.roas && (
-                        <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-[#ed1c24]/15 text-[#ed1c24]">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-[#ed1c24]/15 text-[#ed1c24]">
                           {client.metrics.growth.roas}
                         </span>
                       )}
                     </div>
                     <div className="flex items-baseline gap-2">
-                      <span className="font-display text-3xl sm:text-4xl tracking-tight text-[#ed1c24]">
+                      <span className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums text-[#ed1c24]">
                         {Number(client.metrics?.roas || 0).toFixed(1)}x
                       </span>
-                      <span className={`font-mono text-xs font-bold ${mutedText}`}>
+                      <span className={`text-xs font-semibold ${mutedText}`}>
                         (R$ {(client.metrics?.revenue || 0).toLocaleString('pt-BR')})
                       </span>
                     </div>
                   </div>
-                  <div className={`p-3 rounded-xl ${subtleBox} text-[11px] leading-relaxed`}>
-                    <strong className="block mb-0.5 text-[#ed1c24] font-mono uppercase text-[10px]">
+                  <div className={`p-3 rounded-xl ${subtleBox} text-xs leading-relaxed`}>
+                    <strong className="block mb-0.5 text-[#ed1c24] text-xs font-bold uppercase tracking-wide">
                       O que significa:
                     </strong>
                     Para cada R$ 1 investido em mídia, retornaram R$ {Number(client.metrics?.roas || 0).toFixed(2)} em receita rastreada.
@@ -929,7 +929,7 @@ export function ClientPortal({
                   <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#ed1c24] font-bold block">
                     01.C · Canal de Alinhamento Registrado
                   </span>
-                  <h2 className="font-display text-2xl sm:text-3xl uppercase tracking-tight mt-0.5">
+                  <h2 className="font-heading text-xl sm:text-2xl font-bold tracking-tight mt-0.5 text-[#141414] dark:text-[#f7f7f4]">
                     Mural de Pareceres & Alinhamento
                   </h2>
                 </div>
@@ -946,22 +946,22 @@ export function ClientPortal({
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-[#141414] dark:bg-[#ed1c24] text-white flex items-center justify-center font-display text-sm tracking-wider">
+                    <div className="w-9 h-9 rounded-xl bg-[#141414] dark:bg-[#ed1c24] text-white flex items-center justify-center font-bold text-sm">
                       UP
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs sm:text-sm font-bold">Equipe UPSELL Estratégia</span>
-                        <span className="font-mono text-[10px] uppercase px-2 py-0.5 rounded bg-[#ed1c24]/10 text-[#ed1c24] font-bold">
+                        <span className="text-xs uppercase px-2 py-0.5 rounded bg-[#ed1c24]/10 text-[#ed1c24] font-bold">
                           Canal Direto
                         </span>
                       </div>
-                      <span className={`text-[11px] block ${mutedText}`}>
+                      <span className={`text-xs block ${mutedText}`}>
                         Todas as mensagens ficam salvas no histórico da sua operação
                       </span>
                     </div>
                   </div>
-                  <div className={`flex items-center gap-1.5 font-mono text-[11px] ${mutedText}`}>
+                  <div className={`flex items-center gap-1.5 text-xs ${mutedText}`}>
                     <MessageCircle className="w-3.5 h-3.5 text-[#ed1c24]" />
                     <span>{operationMessages.length} registros</span>
                   </div>
@@ -1000,7 +1000,7 @@ export function ClientPortal({
                             </span>
                             {msg.tag && (
                               <span
-                                className={`font-mono text-[10px] uppercase px-2 py-0.5 rounded font-bold ${
+                                className={`text-xs uppercase px-2 py-0.5 rounded font-bold ${
                                   isGestor
                                     ? 'bg-[#ed1c24]/10 text-[#ed1c24]'
                                     : 'bg-white/15 text-white'
@@ -1016,7 +1016,7 @@ export function ClientPortal({
                           </p>
 
                           <div
-                            className={`flex items-center justify-end gap-1.5 pt-1 text-[10px] font-mono ${
+                            className={`flex items-center justify-end gap-1.5 pt-1 text-xs ${
                               isGestor ? mutedText : 'text-white/70'
                             }`}
                           >
@@ -1093,10 +1093,10 @@ export function ClientPortal({
             <section className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
                 <div>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#ed1c24] font-bold block">
+                  <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                     02.A · Inteligência de Dados Semanal
                   </span>
-                  <h2 className="font-display text-2xl sm:text-3xl uppercase tracking-tight mt-0.5">
+                  <h2 className="font-heading text-xl sm:text-2xl font-bold tracking-tight mt-0.5 text-[#141414] dark:text-[#f7f7f4]">
                     Gráfico de Evolução da Operação
                   </h2>
                 </div>
@@ -1112,10 +1112,10 @@ export function ClientPortal({
             <section className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
                 <div>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#ed1c24] font-bold block">
+                  <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                     02.B · Bastidores Técnicos
                   </span>
-                  <h2 className="font-display text-2xl sm:text-3xl uppercase tracking-tight mt-0.5">
+                  <h2 className="font-heading text-xl sm:text-2xl font-bold tracking-tight mt-0.5 text-[#141414] dark:text-[#f7f7f4]">
                     Diário de Otimizações Executadas pela UPSELL
                   </h2>
                 </div>
@@ -1133,10 +1133,10 @@ export function ClientPortal({
                     >
                       <div className="space-y-2 max-w-3xl">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-mono text-[10px] font-bold uppercase px-2.5 py-0.5 rounded bg-[#ed1c24]/10 text-[#ed1c24]">
+                          <span className="text-xs font-bold uppercase px-2.5 py-0.5 rounded bg-[#ed1c24]/10 text-[#ed1c24]">
                             {log.channel}
                           </span>
-                          <span className={`font-mono text-[11px] ${mutedText}`}>
+                          <span className={`text-xs font-medium ${mutedText}`}>
                             Registrado em: {log.date}
                           </span>
                         </div>
@@ -1151,7 +1151,7 @@ export function ClientPortal({
 
                       <div className="shrink-0">
                         <span
-                          className={`inline-flex items-center gap-1.5 font-mono text-[11px] font-bold px-3 py-1.5 rounded-full border ${
+                          className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border ${
                             log.status === 'Concluído'
                               ? isLight
                                 ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
@@ -1179,10 +1179,10 @@ export function ClientPortal({
             <section className={`p-6 sm:p-7 rounded-2xl ${surfaceCard} space-y-4`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#141414]/10 dark:border-white/10">
                 <div>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ed1c24] font-bold block">
+                  <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                     02.C · Entregas Contratadas
                   </span>
-                  <h3 className="font-display text-xl uppercase tracking-tight">
+                  <h3 className="font-heading text-lg font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                     Escopo de Atuação Ativo na Sua Conta
                   </h3>
                 </div>
@@ -1215,10 +1215,10 @@ export function ClientPortal({
           <section className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
               <div>
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#ed1c24] font-bold block">
+                <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                   03 · Gestão de Entregas & Co-responsabilidade
                 </span>
-                <h2 className="font-display text-2xl sm:text-3xl uppercase tracking-tight mt-0.5">
+                <h2 className="font-heading text-xl sm:text-2xl font-bold tracking-tight mt-0.5 text-[#141414] dark:text-[#f7f7f4]">
                   Quadro de Tarefas: O que está com a UPSELL vs. Com Você
                 </h2>
               </div>
@@ -1236,10 +1236,10 @@ export function ClientPortal({
                     : surfaceCard
                 } space-y-1.5`}
               >
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#ed1c24] font-bold block">
+                <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                   Responsabilidade do Cliente
                 </span>
-                <div className="font-display text-3xl">
+                <div className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums text-[#141414] dark:text-[#f7f7f4]">
                   {clientPendingTasks.length} {clientPendingTasks.length === 1 ? 'pendência' : 'pendências'}
                 </div>
                 <p className={`text-xs ${mutedText}`}>
@@ -1248,10 +1248,10 @@ export function ClientPortal({
               </div>
 
               <div className={`p-5 rounded-2xl ${surfaceCard} space-y-1.5`}>
-                <span className={`font-mono text-[10px] uppercase tracking-[0.16em] font-bold block ${mutedText}`}>
+                <span className={`text-xs uppercase tracking-wide font-bold block ${mutedText}`}>
                   Responsabilidade da UPSELL
                 </span>
-                <div className="font-display text-3xl">
+                <div className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums text-[#141414] dark:text-[#f7f7f4]">
                   {agencyActiveTasks.length} em execução
                 </div>
                 <p className={`text-xs ${mutedText}`}>
@@ -1260,10 +1260,10 @@ export function ClientPortal({
               </div>
 
               <div className={`p-5 rounded-2xl ${surfaceCard} space-y-1.5`}>
-                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400 font-bold block">
+                <span className="text-xs uppercase tracking-wide text-emerald-600 dark:text-emerald-400 font-bold block">
                   Histórico de Entregas
                 </span>
-                <div className="font-display text-3xl text-emerald-600 dark:text-emerald-400">
+                <div className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums text-emerald-600 dark:text-emerald-400">
                   {completedTasks.length} concluídas
                 </div>
                 <p className={`text-xs ${mutedText}`}>
@@ -1296,10 +1296,10 @@ export function ClientPortal({
             <section className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
                 <div>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#ed1c24] font-bold block">
+                  <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                     04.A · Inteligência & Documentação Oficial
                   </span>
-                  <h2 className="font-display text-2xl sm:text-3xl uppercase tracking-tight mt-0.5">
+                  <h2 className="font-heading text-xl sm:text-2xl font-bold tracking-tight mt-0.5 text-[#141414] dark:text-[#f7f7f4]">
                     Relatórios em Tempo Real & Instrumento Legal
                   </h2>
                 </div>
@@ -1316,11 +1316,11 @@ export function ClientPortal({
                       <div className="w-10 h-10 rounded-xl bg-[#ed1c24]/10 text-[#ed1c24] flex items-center justify-center">
                         <BarChart3 className="w-5 h-5" />
                       </div>
-                      <span className="font-mono text-[10px] uppercase tracking-wider px-2.5 py-1 rounded bg-[#ed1c24]/10 text-[#ed1c24] font-bold">
+                      <span className="text-xs uppercase tracking-wide px-2.5 py-1 rounded bg-[#ed1c24]/10 text-[#ed1c24] font-bold">
                         Looker Studio BI
                       </span>
                     </div>
-                    <h3 className="font-display text-xl uppercase tracking-tight">
+                    <h3 className="font-heading text-lg font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                       Dashboard Ao Vivo (BI)
                     </h3>
                     <p className={`text-xs leading-relaxed ${mutedText}`}>
@@ -1352,7 +1352,7 @@ export function ClientPortal({
                       title="Copiar link"
                     >
                       {copiedKey === 'copy-looker' ? (
-                        <span className="text-emerald-600 font-mono text-[10px] font-bold">Copiado!</span>
+                        <span className="text-emerald-600 font-bold text-xs">Copiado!</span>
                       ) : (
                         <Copy className="w-3.5 h-3.5" />
                       )}
@@ -1367,11 +1367,11 @@ export function ClientPortal({
                       <div className="w-10 h-10 rounded-xl bg-[#ed1c24]/10 text-[#ed1c24] flex items-center justify-center">
                         <FileCheck2 className="w-5 h-5" />
                       </div>
-                      <span className={`font-mono text-[10px] uppercase tracking-wider px-2.5 py-1 rounded ${subtleBox} font-bold`}>
+                      <span className={`text-xs uppercase tracking-wide px-2.5 py-1 rounded ${subtleBox} font-bold`}>
                         Escopo & Garantias
                       </span>
                     </div>
-                    <h3 className="font-display text-xl uppercase tracking-tight">
+                    <h3 className="font-heading text-lg font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                       Contrato Oficial de Parceria
                     </h3>
                     <p className={`text-xs leading-relaxed ${mutedText}`}>
@@ -1397,7 +1397,7 @@ export function ClientPortal({
                       title="Copiar link do PDF"
                     >
                       {copiedKey === 'copy-contract' ? (
-                        <span className="text-emerald-600 font-mono text-[10px] font-bold">Copiado!</span>
+                        <span className="text-emerald-600 font-bold text-xs">Copiado!</span>
                       ) : (
                         <Copy className="w-3.5 h-3.5" />
                       )}
@@ -1412,11 +1412,11 @@ export function ClientPortal({
                       <div className="w-10 h-10 rounded-xl bg-[#ed1c24]/10 text-[#ed1c24] flex items-center justify-center">
                         <FolderOpen className="w-5 h-5" />
                       </div>
-                      <span className={`font-mono text-[10px] uppercase tracking-wider px-2.5 py-1 rounded ${subtleBox} font-bold`}>
+                      <span className={`text-xs uppercase tracking-wide px-2.5 py-1 rounded ${subtleBox} font-bold`}>
                         Google Drive Raiz
                       </span>
                     </div>
-                    <h3 className="font-display text-xl uppercase tracking-tight">
+                    <h3 className="font-heading text-lg font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                       Repositório Geral da Marca
                     </h3>
                     <p className={`text-xs leading-relaxed ${mutedText}`}>
@@ -1448,7 +1448,7 @@ export function ClientPortal({
                       title="Copiar link"
                     >
                       {copiedKey === 'copy-drive' ? (
-                        <span className="text-emerald-600 font-mono text-[10px] font-bold">Copiado!</span>
+                        <span className="text-emerald-600 font-bold text-xs">Copiado!</span>
                       ) : (
                         <Copy className="w-3.5 h-3.5" />
                       )}
@@ -1462,10 +1462,10 @@ export function ClientPortal({
             <section className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
                 <div>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#ed1c24] font-bold block">
+                  <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                     04.B · Biblioteca de Anúncios & Conteúdo
                   </span>
-                  <h2 className="font-display text-2xl sm:text-3xl uppercase tracking-tight mt-0.5">
+                  <h2 className="font-heading text-xl sm:text-2xl font-bold tracking-tight mt-0.5 text-[#141414] dark:text-[#f7f7f4]">
                     Pastas de Criativos Organizadas por Formato
                   </h2>
                 </div>
@@ -1482,11 +1482,11 @@ export function ClientPortal({
                       <div className={`w-10 h-10 rounded-xl ${subtleBox} flex items-center justify-center`}>
                         <FileText className="w-5 h-5 text-[#ed1c24]" />
                       </div>
-                      <span className={`font-mono text-[10px] uppercase tracking-wider ${mutedText}`}>
+                      <span className={`text-xs uppercase tracking-wider ${mutedText}`}>
                         01 · Textos & Roteiros
                       </span>
                     </div>
-                    <h3 className="font-display text-xl uppercase tracking-tight">
+                    <h3 className="font-heading text-lg font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                       Pasta de Copys & Roteiros
                     </h3>
                     <p className={`text-xs leading-relaxed ${mutedText}`}>
@@ -1517,7 +1517,7 @@ export function ClientPortal({
                       }`}
                     >
                       {copiedKey === 'copy-copys' ? (
-                        <span className="text-emerald-600 font-mono text-[10px] font-bold">Copiado!</span>
+                        <span className="text-emerald-600 font-bold text-xs">Copiado!</span>
                       ) : (
                         <Copy className="w-3.5 h-3.5" />
                       )}
@@ -1532,11 +1532,11 @@ export function ClientPortal({
                       <div className={`w-10 h-10 rounded-xl ${subtleBox} flex items-center justify-center`}>
                         <Video className="w-5 h-5 text-[#ed1c24]" />
                       </div>
-                      <span className={`font-mono text-[10px] uppercase tracking-wider ${mutedText}`}>
+                      <span className={`text-xs uppercase tracking-wider ${mutedText}`}>
                         02 · Reels & Vídeo Ads
                       </span>
                     </div>
-                    <h3 className="font-display text-xl uppercase tracking-tight">
+                    <h3 className="font-heading text-lg font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                       Criativos em Vídeo
                     </h3>
                     <p className={`text-xs leading-relaxed ${mutedText}`}>
@@ -1567,7 +1567,7 @@ export function ClientPortal({
                       }`}
                     >
                       {copiedKey === 'copy-videos' ? (
-                        <span className="text-emerald-600 font-mono text-[10px] font-bold">Copiado!</span>
+                        <span className="text-emerald-600 font-bold text-xs">Copiado!</span>
                       ) : (
                         <Copy className="w-3.5 h-3.5" />
                       )}
@@ -1582,11 +1582,11 @@ export function ClientPortal({
                       <div className={`w-10 h-10 rounded-xl ${subtleBox} flex items-center justify-center`}>
                         <ImageIcon className="w-5 h-5 text-[#ed1c24]" />
                       </div>
-                      <span className={`font-mono text-[10px] uppercase tracking-wider ${mutedText}`}>
+                      <span className={`text-xs uppercase tracking-wider ${mutedText}`}>
                         03 · Artes & Carrosséis
                       </span>
                     </div>
-                    <h3 className="font-display text-xl uppercase tracking-tight">
+                    <h3 className="font-heading text-lg font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                       Criativos Estáticos & Banners
                     </h3>
                     <p className={`text-xs leading-relaxed ${mutedText}`}>
@@ -1617,7 +1617,7 @@ export function ClientPortal({
                       }`}
                     >
                       {copiedKey === 'copy-images' ? (
-                        <span className="text-emerald-600 font-mono text-[10px] font-bold">Copiado!</span>
+                        <span className="text-emerald-600 font-bold text-xs">Copiado!</span>
                       ) : (
                         <Copy className="w-3.5 h-3.5" />
                       )}
@@ -1631,14 +1631,14 @@ export function ClientPortal({
             <section className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
                 <div>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#ed1c24] font-bold block">
+                  <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                     04.C · Soberania Digital da Sua Empresa
                   </span>
-                  <h2 className="font-display text-2xl sm:text-3xl uppercase tracking-tight mt-0.5">
+                  <h2 className="font-heading text-xl sm:text-2xl font-bold tracking-tight mt-0.5 text-[#141414] dark:text-[#f7f7f4]">
                     Ferramentas & Contas Vinculadas à Operação
                   </h2>
                 </div>
-                <span className="inline-flex items-center gap-1.5 font-mono text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">
                   <ShieldCheck className="w-4 h-4" />
                   <span>100% de Titularidade da Sua Marca (Zero Retenção)</span>
                 </span>
@@ -1657,7 +1657,7 @@ export function ClientPortal({
                             {tool.name}
                           </span>
                           <span
-                            className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${
+                            className={`text-xs font-semibold px-2 py-0.5 rounded shrink-0 ${
                               tool.status === 'Ativo / Vinculado'
                                 ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
                                 : tool.status === 'Pendente de Acesso'
@@ -1673,7 +1673,7 @@ export function ClientPortal({
                         </p>
                       </div>
 
-                      <div className={`pt-3 border-t ${hairline} flex items-center justify-between text-[11px]`}>
+                      <div className={`pt-3 border-t ${hairline} flex items-center justify-between text-xs`}>
                         <span className={`font-mono truncate max-w-[170px] ${mutedText}`}>
                           {tool.accountEmail || tool.category}
                         </span>
@@ -1718,7 +1718,7 @@ export function ClientPortal({
             <div className={`flex items-center justify-between pb-3 border-b ${hairline} mb-4`}>
               <div className="flex items-center gap-2">
                 <Info className="w-5 h-5 text-[#ed1c24]" />
-                <h3 className="font-display text-lg uppercase tracking-tight">{infoModalMessage.title}</h3>
+                <h3 className="font-heading text-base font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">{infoModalMessage.title}</h3>
               </div>
               <button
                 type="button"

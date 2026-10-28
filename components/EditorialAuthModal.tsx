@@ -102,15 +102,15 @@ export function EditorialAuthModal({ isOpen, onClose, onLogin }: EditorialAuthMo
         onClick={(e) => e.stopPropagation()}
         className="bg-[#f7f7f4] text-[#141414] border border-[#141414]/15 rounded-2xl w-full max-w-lg overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.45)] relative my-8"
       >
-        {/* Top Swiss Editorial Bar */}
+        {/* Top Bar */}
         <div className="flex items-center justify-between px-6 py-4 bg-[#141414] text-[#f7f7f4]">
           <div className="flex items-center gap-2.5">
             <span className="inline-block w-2 h-2 rounded-full bg-[#ed1c24]" />
-            <span className="font-display tracking-[0.14em] text-sm uppercase">
+            <span className="font-bold tracking-wide text-sm">
               UPSELL
             </span>
             <span className="text-white/30 text-xs">/</span>
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/70">
+            <span className="text-xs uppercase tracking-wider text-white/70 font-semibold">
               Portal do Cliente & Console
             </span>
           </div>
@@ -127,10 +127,10 @@ export function EditorialAuthModal({ isOpen, onClose, onLogin }: EditorialAuthMo
         <div className="p-6 sm:p-8 space-y-6">
           {/* Header */}
           <div className="space-y-2">
-            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#ed1c24] font-bold block">
+            <span className="text-xs uppercase tracking-wider text-[#ed1c24] font-bold block">
               Acesso Exclusivo · Sem Senhas Manuais
             </span>
-            <h3 className="font-display text-3xl sm:text-4xl text-[#141414] uppercase leading-[0.95] tracking-tight">
+            <h3 className="font-heading text-2xl sm:text-3xl font-extrabold text-[#141414] leading-tight tracking-tight">
               Área de Acompanhamento & Performance
             </h3>
             <p className="text-xs sm:text-sm text-[#141414]/70 leading-relaxed pt-1">
@@ -141,23 +141,23 @@ export function EditorialAuthModal({ isOpen, onClose, onLogin }: EditorialAuthMo
           {/* Didactic 3-Step Explanation */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div className="p-3.5 rounded-xl bg-white border border-[#141414]/10 space-y-1">
-              <span className="font-mono text-[10px] font-bold text-[#ed1c24] block">PASSO 01</span>
+              <span className="text-xs font-bold text-[#ed1c24] block">Passo 01</span>
               <span className="text-xs font-bold text-[#141414] block">Login Google</span>
-              <p className="text-[11px] text-[#141414]/65 leading-snug">
+              <p className="text-xs text-[#141414]/65 leading-relaxed">
                 Clique no botão abaixo e selecione seu Gmail corporativo ou pessoal.
               </p>
             </div>
             <div className="p-3.5 rounded-xl bg-white border border-[#141414]/10 space-y-1">
-              <span className="font-mono text-[10px] font-bold text-[#ed1c24] block">PASSO 02</span>
+              <span className="text-xs font-bold text-[#ed1c24] block">Passo 02</span>
               <span className="text-xs font-bold text-[#141414] block">Validação Firebase</span>
-              <p className="text-[11px] text-[#141414]/65 leading-snug">
+              <p className="text-xs text-[#141414]/65 leading-relaxed">
                 O sistema verifica se o seu e-mail está autorizado na conta da empresa.
               </p>
             </div>
             <div className="p-3.5 rounded-xl bg-white border border-[#141414]/10 space-y-1">
-              <span className="font-mono text-[10px] font-bold text-[#ed1c24] block">PASSO 03</span>
+              <span className="text-xs font-bold text-[#ed1c24] block">Passo 03</span>
               <span className="text-xs font-bold text-[#141414] block">Acesso Direto</span>
-              <p className="text-[11px] text-[#141414]/65 leading-snug">
+              <p className="text-xs text-[#141414]/65 leading-relaxed">
                 Clientes abrem o Portal da Empresa; o gestor abre o Console Master.
               </p>
             </div>

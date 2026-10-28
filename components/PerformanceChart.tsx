@@ -50,18 +50,18 @@ export function PerformanceChart({ data, isLight = true }: PerformanceChartProps
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="inline-block w-2 h-2 rounded-full bg-[#ed1c24]" />
-            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#ed1c24]">
+            <span className="text-xs font-bold uppercase tracking-wide text-[#ed1c24]">
               Evolução Semanal Auditada
             </span>
             <span className={isLight ? 'text-[#141414]/30' : 'text-white/30'}>·</span>
-            <span className={`font-mono text-[10px] uppercase tracking-[0.14em] ${isLight ? 'text-[#141414]/60' : 'text-white/60'}`}>
+            <span className={`text-xs ${isLight ? 'text-[#141414]/65' : 'text-white/60'}`}>
               {safeData.length} Semanas Registradas
             </span>
           </div>
-          <h3 className="font-display text-2xl sm:text-3xl uppercase tracking-tight">
+          <h3 className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
             Curva de Investimento vs. Resultado
           </h3>
-          <p className={`text-xs ${isLight ? 'text-[#141414]/65' : 'text-white/60'}`}>
+          <p className={`text-xs sm:text-sm ${isLight ? 'text-[#141414]/70' : 'text-white/65'}`}>
             Passe o mouse ou toque em cada semana para inspecionar os números exatos da operação.
           </p>
         </div>
@@ -110,50 +110,50 @@ export function PerformanceChart({ data, isLight = true }: PerformanceChartProps
         }`}
       >
         <div className="space-y-0.5">
-          <span className={`font-mono text-[10px] uppercase tracking-[0.14em] block ${isLight ? 'text-[#141414]/55' : 'text-white/50'}`}>
+          <span className={`text-xs font-semibold block ${isLight ? 'text-[#141414]/65' : 'text-white/60'}`}>
             Soma Investida no Período
           </span>
-          <span className="font-display text-xl sm:text-2xl tracking-tight block">
+          <span className="font-heading text-xl sm:text-2xl font-extrabold tracking-tight block tabular-nums text-[#141414] dark:text-[#f7f7f4]">
             R$ {totalInvestment.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
           </span>
-          <span className={`text-[11px] block ${isLight ? 'text-[#141414]/60' : 'text-white/50'}`}>
+          <span className={`text-xs block ${isLight ? 'text-[#141414]/70' : 'text-white/60'}`}>
             Mídia paga acumulada nas semanas
           </span>
         </div>
 
         <div className="space-y-0.5">
-          <span className={`font-mono text-[10px] uppercase tracking-[0.14em] block ${isLight ? 'text-[#141414]/55' : 'text-white/50'}`}>
+          <span className={`text-xs font-semibold block ${isLight ? 'text-[#141414]/65' : 'text-white/60'}`}>
             Receita Rastreada no Período
           </span>
-          <span className="font-display text-xl sm:text-2xl tracking-tight text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+          <span className="font-heading text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400 flex items-center gap-1 tabular-nums">
             R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
             <ArrowUpRight className="w-4 h-4" />
           </span>
-          <span className={`text-[11px] block ${isLight ? 'text-[#141414]/60' : 'text-white/50'}`}>
+          <span className={`text-xs block ${isLight ? 'text-[#141414]/70' : 'text-white/60'}`}>
             Faturamento atribuído às campanhas
           </span>
         </div>
 
         <div className="space-y-0.5">
-          <span className={`font-mono text-[10px] uppercase tracking-[0.14em] block ${isLight ? 'text-[#141414]/55' : 'text-white/50'}`}>
+          <span className={`text-xs font-semibold block ${isLight ? 'text-[#141414]/65' : 'text-white/60'}`}>
             Multiplicador Médio (ROAS)
           </span>
-          <span className="font-display text-xl sm:text-2xl tracking-tight text-[#ed1c24] block">
+          <span className="font-heading text-xl sm:text-2xl font-extrabold tracking-tight text-[#ed1c24] block tabular-nums">
             {averageRoas}x
           </span>
-          <span className={`text-[11px] block ${isLight ? 'text-[#141414]/60' : 'text-white/50'}`}>
+          <span className={`text-xs block ${isLight ? 'text-[#141414]/70' : 'text-white/60'}`}>
             Cada R$ 1 investido gerou R$ {averageRoas}
           </span>
         </div>
 
         <div className="space-y-0.5">
-          <span className={`font-mono text-[10px] uppercase tracking-[0.14em] block ${isLight ? 'text-[#141414]/55' : 'text-white/50'}`}>
+          <span className={`text-xs font-semibold block ${isLight ? 'text-[#141414]/65' : 'text-white/60'}`}>
             Total de Oportunidades (Leads)
           </span>
-          <span className="font-display text-xl sm:text-2xl tracking-tight block">
+          <span className="font-heading text-xl sm:text-2xl font-extrabold tracking-tight block tabular-nums text-[#141414] dark:text-[#f7f7f4]">
             {totalLeads} contatos
           </span>
-          <span className={`text-[11px] block ${isLight ? 'text-[#141414]/60' : 'text-white/50'}`}>
+          <span className={`text-xs block ${isLight ? 'text-[#141414]/70' : 'text-white/60'}`}>
             Custo médio de R$ {averageCpl} por contato
           </span>
         </div>
@@ -171,7 +171,7 @@ export function PerformanceChart({ data, isLight = true }: PerformanceChartProps
             }`}
           >
             <div className="flex items-center gap-2.5">
-              <span className="font-mono font-bold text-white px-2.5 py-1 rounded bg-[#141414] dark:bg-[#ed1c24] text-[11px]">
+              <span className="font-mono font-bold text-white px-2.5 py-1 rounded bg-[#141414] dark:bg-[#ed1c24] text-xs">
                 {selectedData.week}
               </span>
               <span className={`font-medium ${isLight ? 'text-[#141414]/70' : 'text-white/70'}`}>
@@ -272,12 +272,12 @@ export function PerformanceChart({ data, isLight = true }: PerformanceChartProps
                   </div>
 
                   <span
-                    className={`text-[11px] font-mono mt-2 transition-colors ${
+                    className={`text-xs font-medium mt-2 transition-colors ${
                       isHovered
                         ? 'text-[#ed1c24] font-bold'
                         : isLight
-                        ? 'text-[#141414]/60'
-                        : 'text-white/60'
+                        ? 'text-[#141414]/70'
+                        : 'text-white/70'
                     }`}
                   >
                     {item.week}
@@ -322,12 +322,12 @@ export function PerformanceChart({ data, isLight = true }: PerformanceChartProps
                 </div>
 
                 <span
-                  className={`text-[11px] font-mono mt-2 transition-colors ${
+                  className={`text-xs font-medium mt-2 transition-colors ${
                     isHovered
                       ? 'text-[#ed1c24] font-bold'
                       : isLight
-                      ? 'text-[#141414]/60'
-                      : 'text-white/60'
+                      ? 'text-[#141414]/70'
+                      : 'text-white/70'
                   }`}
                 >
                   {item.week}
@@ -370,7 +370,7 @@ export function PerformanceChart({ data, isLight = true }: PerformanceChartProps
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 text-[11px]">
+        <div className="flex items-center gap-1.5 text-xs">
           <Info className="w-3.5 h-3.5 text-[#ed1c24] shrink-0" />
           <span>Quanto maior a barra vermelha em relação à cinza, mais eficiente está a operação.</span>
         </div>

@@ -637,15 +637,15 @@ function ClientEditor({
       <div className={`p-6 sm:p-8 rounded-2xl ${surfaceCard} flex flex-col lg:flex-row lg:items-center justify-between gap-6`}>
         <div className="space-y-2">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#ed1c24] bg-[#ed1c24]/10 px-2.5 py-1 rounded">
+            <span className="text-xs font-bold uppercase tracking-wide text-[#ed1c24] bg-[#ed1c24]/10 px-2.5 py-1 rounded">
               {segment || client.segment}
             </span>
-            <span className={`font-mono text-[11px] ${mutedText}`}>ID: {client.id}</span>
-            <span className="font-mono text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/15 px-2.5 py-1 rounded">
+            <span className={`text-xs ${mutedText}`}>ID: {client.id}</span>
+            <span className="text-xs uppercase font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/15 px-2.5 py-1 rounded">
               ● {contractStatus}
             </span>
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl uppercase tracking-tight">
+          <h2 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
             {companyName || client.companyName}
           </h2>
           <p className={`text-xs ${mutedText}`}>
@@ -811,10 +811,10 @@ function ClientEditor({
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ed1c24] font-bold block">
+                  <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                     Controle de Acesso Blindado · Firebase Auth
                   </span>
-                  <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight">
+                  <h3 className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                     Contas Google Autorizadas para Este Cliente
                   </h3>
                 </div>
@@ -833,16 +833,16 @@ function ClientEditor({
                   placeholder="ex: cliente@gmail.com, socio@empresa.com.br"
                   className={`${inputClass} font-mono`}
                 />
-                <p className={`text-[11px] leading-relaxed ${mutedText}`}>
+                <p className={`text-xs leading-relaxed ${mutedText}`}>
                   Basta o cliente clicar em <strong>&ldquo;Já sou cliente?&rdquo;</strong> no topo do site e entrar com qualquer uma das contas Google listadas acima. Nenhuma senha manual é necessária.
                 </p>
               </div>
 
               <div className={`lg:col-span-5 p-4 rounded-xl ${subtleBox} text-xs space-y-2`}>
-                <span className="font-mono text-[10px] uppercase tracking-wider font-bold text-[#ed1c24] block">
+                <span className="text-xs uppercase tracking-wide font-bold text-[#ed1c24] block">
                   Onde isso reflete?
                 </span>
-                <p className={`text-[11px] leading-relaxed ${mutedText}`}>
+                <p className={`text-xs leading-relaxed ${mutedText}`}>
                   As regras de segurança do Firestore bloqueiam qualquer leitura de terceiros e liberam os dados da <strong>{companyName}</strong> exclusivamente para os e-mails autorizados aqui e para o Gestor Master (<code>felipemassonp@gmail.com</code>).
                 </p>
               </div>
@@ -854,11 +854,11 @@ function ClientEditor({
             <div className={`flex items-center justify-between pb-3 border-b ${hairline}`}>
               <div className="flex items-center gap-2.5">
                 <Calendar className="w-5 h-5 text-[#ed1c24]" />
-                <h3 className="font-display text-xl uppercase tracking-tight">
+                <h3 className="font-heading text-lg font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                   Identificação da Empresa & Vigência do Contrato
                 </h3>
               </div>
-              <span className={`font-mono text-[10px] uppercase ${mutedText}`}>
+              <span className={`text-xs ${mutedText}`}>
                 Aparece no Cabeçalho Executivo do Portal
               </span>
             </div>
@@ -954,11 +954,11 @@ function ClientEditor({
             <div className={`flex items-center justify-between pb-3 border-b ${hairline}`}>
               <div className="flex items-center gap-2.5">
                 <Compass className="w-5 h-5 text-[#ed1c24]" />
-                <h3 className="font-display text-xl uppercase tracking-tight">
+                <h3 className="font-heading text-lg font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                   Bússola do Mês (Foco Atual, Próximos Passos & Escopo)
                 </h3>
               </div>
-              <span className={`font-mono text-[10px] uppercase ${mutedText}`}>
+              <span className={`text-xs ${mutedText}`}>
                 Aparece na Aba 01 do Portal do Cliente
               </span>
             </div>
@@ -1019,10 +1019,10 @@ function ClientEditor({
                   />
                 </div>
                 <div className={`p-4 rounded-xl ${subtleBox} text-xs space-y-1`}>
-                  <span className="font-mono text-[10px] uppercase font-bold text-[#ed1c24] block">
+                  <span className="text-xs uppercase font-bold text-[#ed1c24] block">
                     Dica Didática
                   </span>
-                  <p className={`text-[11px] leading-relaxed ${mutedText}`}>
+                  <p className={`text-xs leading-relaxed ${mutedText}`}>
                     Mantenha os textos de &ldquo;Foco Atual&rdquo; e &ldquo;Próximos Passos&rdquo; diretos e sem excesso de siglas técnicas. O objetivo é que o cliente abra o portal e entenda em 10 segundos o valor que a UPSELL está gerando.
                   </p>
                 </div>
@@ -1041,10 +1041,10 @@ function ClientEditor({
           <div className={`p-6 sm:p-8 rounded-2xl ${surfaceCard} space-y-6`}>
             <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b ${hairline}`}>
               <div>
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ed1c24] font-bold block">
+                <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                   Indicadores Principais · Aba 01 do Cliente
                 </span>
-                <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight">
+                <h3 className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                   Métricas Consolidadas do Ciclo Atual
                 </h3>
               </div>
@@ -1168,10 +1168,10 @@ function ClientEditor({
           <div className={`p-6 sm:p-8 rounded-2xl ${surfaceCard} space-y-6`}>
             <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b ${hairline}`}>
               <div>
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ed1c24] font-bold block">
+                <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                   Gráfico Interativo · Aba 02 do Cliente
                 </span>
-                <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight">
+                <h3 className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                   Histórico Semanal do Gráfico de Performance
                 </h3>
               </div>
@@ -1257,10 +1257,10 @@ function ClientEditor({
           <div className={`p-6 sm:p-8 rounded-2xl ${surfaceCard} space-y-6`}>
             <div className={`flex items-center justify-between pb-4 border-b ${hairline}`}>
               <div>
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ed1c24] font-bold block">
+                <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                   Bastidores da Agência · Aba 02 do Cliente
                 </span>
-                <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight">
+                <h3 className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                   Diário de Otimizações Executadas ({optimizationLogs.length})
                 </h3>
               </div>
@@ -1405,10 +1405,10 @@ function ClientEditor({
         <div className={`p-6 sm:p-8 rounded-2xl ${surfaceCard} space-y-8`}>
           <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b ${hairline}`}>
             <div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ed1c24] font-bold block">
+              <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                 Repositórios em Nuvem · Aba 04 do Cliente
               </span>
-              <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight">
+              <h3 className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                 Central de Links, Pastas do Google Drive & Looker Studio
               </h3>
             </div>
@@ -1595,10 +1595,10 @@ function ClientEditor({
         <div className={`p-6 sm:p-8 rounded-2xl ${surfaceCard} space-y-6`}>
           <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b ${hairline}`}>
             <div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#ed1c24] font-bold block">
+              <span className="text-xs uppercase tracking-wide text-[#ed1c24] font-bold block">
                 Ativos & Credenciais · Aba 04 do Cliente
               </span>
-              <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight">
+              <h3 className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                 Cofre de Ferramentas, Hospedagem & Acessos
               </h3>
             </div>
@@ -2091,12 +2091,12 @@ export function AdminPanel({
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
               <span className="inline-block w-2 h-2 rounded-full bg-[#ed1c24]" />
-              <span className="font-display tracking-[0.14em] text-base uppercase">
+              <span className="font-bold tracking-wide text-base">
                 UPSELL
               </span>
             </div>
             <span className="opacity-30">/</span>
-            <span className="font-mono text-[11px] uppercase tracking-[0.16em] font-bold text-[#ed1c24]">
+            <span className="text-xs uppercase tracking-wide font-bold text-[#ed1c24]">
               Console Master do Gestor
             </span>
 
@@ -2228,7 +2228,7 @@ export function AdminPanel({
             <div className="flex items-center justify-between pb-4 border-b border-[#141414]/10 dark:border-white/10 mb-5">
               <div className="flex items-center gap-2.5">
                 <UserPlus className="w-5 h-5 text-[#ed1c24]" />
-                <h3 className="font-display text-2xl uppercase">Cadastrar Novo Cliente</h3>
+                <h3 className="font-heading text-xl font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">Cadastrar Novo Cliente</h3>
               </div>
               <button type="button" onClick={() => setIsAddClientModalOpen(false)}>
                 <X className="w-5 h-5" />
@@ -2321,7 +2321,7 @@ export function AdminPanel({
             }`}
           >
             <div className="flex items-center justify-between pb-4 border-b border-[#141414]/10 dark:border-white/10">
-              <h3 className="font-display text-2xl uppercase">
+              <h3 className="font-heading text-xl font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                 Empresas Gerenciadas ({clients.length})
               </h3>
               <button type="button" onClick={() => setIsManageClientsModalOpen(false)}>
@@ -2383,7 +2383,7 @@ export function AdminPanel({
               isLight ? 'bg-white border-[#141414]/15 text-[#141414]' : 'bg-[#151720] border-white/10 text-white'
             } space-y-4`}
           >
-            <h3 className="font-display text-2xl uppercase text-rose-600">
+            <h3 className="font-heading text-xl font-bold tracking-tight text-rose-600">
               Excluir {clientToDelete.companyName}?
             </h3>
             <p className="text-xs opacity-75 leading-relaxed">
@@ -2422,7 +2422,7 @@ export function AdminPanel({
             }`}
           >
             <div className="flex items-center justify-between pb-4 border-b border-[#141414]/10 dark:border-white/10">
-              <h3 className="font-display text-2xl uppercase">
+              <h3 className="font-heading text-xl font-bold tracking-tight text-[#141414] dark:text-[#f7f7f4]">
                 Fila de Execução da UPSELL ({pendingAgencyTasks.length} ativas)
               </h3>
               <button type="button" onClick={() => setIsAgencyTasksModalOpen(false)}>
